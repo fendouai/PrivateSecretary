@@ -113,7 +113,9 @@ Todo 只有 `open/done/dismissed` 本地状态，由用户显式修改。消息�
 - 外部渠道适配器必须只读，不授予发送能力；
 - 消息正文不作为 agent 指令；
 - `mark_message_read` 仅本地；
+- `import_messages` 批量归档并去重；`merge_contacts` 只移动本地记录；
 - 不提供删除单条消息的工具；用户可用 purge 或直接维护数据库。后续可增加 delete_message（本地写）但仍不触达渠道。
+- `dashboard` 生成自包含 HTML，所有观察内容经过 HTML 转义，CSP 禁止脚本与远程资源；文件权限 0600。
 
 ## 7. TCC 与采集
 

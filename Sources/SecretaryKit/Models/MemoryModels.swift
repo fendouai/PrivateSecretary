@@ -1046,3 +1046,66 @@ public struct ServiceStatus: Codable, Equatable, Sendable {
 public enum PrivateSecretaryVersion {
     public static let current = "3.1.0"
 }
+
+// MARK: - Daily brief and imports
+
+public struct DailyBrief: Codable, Equatable, Sendable {
+    public var date: String
+    public var generatedAt: Date
+    public var from: Date
+    public var to: Date
+    public var timeline: [TimelineEntry]
+    public var openTodos: [TodoItem]
+    public var unreadMessages: [ContactMessage]
+    public var contacts: [Contact]
+    public var counts: MemoryCounts
+
+    public init(
+        date: String,
+        generatedAt: Date = Date(),
+        from: Date,
+        to: Date,
+        timeline: [TimelineEntry],
+        openTodos: [TodoItem],
+        unreadMessages: [ContactMessage],
+        contacts: [Contact],
+        counts: MemoryCounts
+    ) {
+        self.date = date
+        self.generatedAt = generatedAt
+        self.from = from
+        self.to = to
+        self.timeline = timeline
+        self.openTodos = openTodos
+        self.unreadMessages = unreadMessages
+        self.contacts = contacts
+        self.counts = counts
+    }
+}
+
+public struct MessageImportIssue: Codable, Equatable, Sendable, Identifiable {
+    public var id: String { "\(index)" }
+    public var index: Int
+    public var error: String
+
+    public init(index: Int, error: String) {
+        self.index = index
+        self.error = error
+    }
+}
+
+public struct MessageImportReport: Codable, Equatable, Sendable {
+    public var imported: Int
+    public var duplicates: Int
+    public var failed: Int
+    public var issues: [MessageImportIssue]
+
+    public init(imported: Int = 0, duplicates: Int = 0, failed: Int = 0, issues: [MessageImportIssue] = []) {
+        self.imported = imported
+        self.duplicates = duplicates
+        self.failed = failed
+        self.issues = issues
+    }
+
+    public var total: Int { imported + duplicates + failed }
+}

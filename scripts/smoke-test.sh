@@ -37,7 +37,10 @@ PY
 TODO_ID="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["todos"][0]["id"])' "$TODOS_JSON")"
 "$BIN/secretary" --home "$TMP" todo update "$TODO_ID" --status done >/dev/null
 "$BIN/secretary" --home "$TMP" timeline >/dev/null
+"$BIN/secretary" --home "$TMP" brief >/dev/null
 "$BIN/secretary" --home "$TMP" contacts >/dev/null
+"$BIN/secretary" --home "$TMP" dashboard --output "$TMP/dashboard.html" >/dev/null
+grep -q "Timeline" "$TMP/dashboard.html"
 "$BIN/secretary" --home "$TMP" messages --channel email >/dev/null
 "$BIN/secretary" --home "$TMP" digest >/dev/null
 "$BIN/secretary" --home "$TMP" doctor --json >/dev/null
@@ -66,9 +69,10 @@ try:
     send({"jsonrpc":"2.0","method":"notifications/initialized"}, expect_response=False)
     r = send({"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}})
     tools = r["result"]["tools"]
-    assert len(tools) == 16, tools
+    assert len(tools) == 19, tools
     names = {t["name"] for t in tools}
-    assert "get_timeline" in names and "list_todos" in names and "list_messages" in names
+    assert {"get_timeline", "get_brief", "list_todos", "list_messages",
+            "import_messages", "merge_contacts"}.issubset(names)
     assert not any(name in names for name in ("claim_task", "complete_task", "get_procedural_pattern"))
     r = send({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_todos","arguments":{"status":"all"}}})
     payload = json.loads(r["result"]["content"][0]["text"])
@@ -80,6 +84,8 @@ try:
     r = send({"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"list_messages","arguments":{"channel":"lark"}}})
     payload = json.loads(r["result"]["content"][0]["text"])
     assert payload["count"] >= 1, payload
+    r = send({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"get_brief","arguments":{}}})
+    assert r["result"]["isError"] is False, r
     proc.stdin.close()
     proc.wait(timeout=5)
     assert proc.returncode == 0, proc.stderr.read()

@@ -186,4 +186,7 @@ import ImageIO
     let dbAttributes = try FileManager.default.attributesOfItem(atPath: env.paths.databaseFile.path)
     let dbPermissions = (dbAttributes[.posixPermissions] as? NSNumber)?.intValue ?? 0
     #expect(dbPermissions & 0o077 == 0)
+    let exportAttributes = try FileManager.default.attributesOfItem(atPath: env.paths.exportsDirectory.path)
+    let exportPermissions = (exportAttributes[.posixPermissions] as? NSNumber)?.intValue ?? 0
+    #expect(exportPermissions & 0o077 == 0)
 }

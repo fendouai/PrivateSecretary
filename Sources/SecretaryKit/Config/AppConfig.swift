@@ -20,6 +20,7 @@ public struct AppPaths: Sendable {
     public var logDirectory: URL { home.appendingPathComponent("logs", isDirectory: true) }
     public var runDirectory: URL { home.appendingPathComponent("run", isDirectory: true) }
     public var temporaryDirectory: URL { home.appendingPathComponent("tmp", isDirectory: true) }
+    public var exportsDirectory: URL { home.appendingPathComponent("exports", isDirectory: true) }
     public var socketFile: URL { runDirectory.appendingPathComponent("secretaryd.sock") }
     public var pidFile: URL { runDirectory.appendingPathComponent("secretaryd.pid") }
     public var daemonLog: URL { logDirectory.appendingPathComponent("secretaryd.log") }
@@ -27,7 +28,7 @@ public struct AppPaths: Sendable {
 
     public func ensureDirectories() throws {
         let fm = FileManager.default
-        for directory in [home, coldArchiveDirectory, logDirectory, runDirectory, temporaryDirectory] {
+        for directory in [home, coldArchiveDirectory, logDirectory, runDirectory, temporaryDirectory, exportsDirectory] {
             try fm.createDirectory(at: directory, withIntermediateDirectories: true)
             try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
         }

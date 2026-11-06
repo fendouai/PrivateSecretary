@@ -81,7 +81,7 @@ secretary-mcp [--home <dir>]
 
 ---
 
-## 3. 工具
+## 3. 工具（19 个）
 
 ### `recall`
 
@@ -152,6 +152,36 @@ secretary-mcp [--home <dir>]
 ```
 
 按时间升序。L3 facts 默认包含；`include_facts:false` 只看 L2。Timeline 不包含消息。
+
+### `get_brief`
+
+```json
+{"date": "2026-11-06"}
+```
+
+只读的每日总览：
+
+```json
+{
+  "date": "2026-11-06",
+  "generatedAt": "...",
+  "from": "...",
+  "to": "...",
+  "timeline": [...],
+  "openTodos": [...],
+  "unreadMessages": [...],
+  "contacts": [...],
+  "counts": {
+    "episodes": 6,
+    "activeFacts": 4,
+    "openTodos": 3,
+    "contacts": 3,
+    "messages": 5
+  }
+}
+```
+
+推荐作为会话开始的单次调用，代替分别调用 timeline/todos/messages。
 
 ### `get_digest`
 
@@ -269,7 +299,7 @@ secretary-mcp [--home <dir>]
 }
 ```
 
-按 `(channel, handle)` 优先匹配；否则按规范化姓名匹配。只写本地。
+按 `(channel, handle)` 优先匹配；否则按规范化姓名匹配。只写本地。重复联系人可用 `merge_contacts` 合并。
 
 ### `list_messages`
 
@@ -278,9 +308,12 @@ secretary-mcp [--home <dir>]
   "channel": "email",
   "contact_id": "contact_...",
   "unread_only": true,
+  "query": "benchmark",
   "limit": 100
 }
 ```
+
+`query` 使用 message_fts 全文匹配（中文 bigram）。
 
 返回：
 
@@ -322,6 +355,39 @@ secretary-mcp [--home <dir>]
 ```
 
 **归档，不发送。** 同一 `(channel, external_id)` 幂等；没有 external id 时使用内容哈希。
+
+### `import_messages`
+
+```json
+{
+  "default_channel": "email",
+  "messages": [
+    {
+      "contact_name": "张三",
+      "handle": "zhangsan@example.com",
+      "direction": "inbound",
+      "text": "HNSW 参数对比请周五前发我",
+      "external_id": "mail-1"
+    }
+  ]
+}
+```
+
+批量归档渠道适配器消息，最多 500 条；重复 external_id 计入 duplicates。返回：
+
+```json
+{"imported": 1, "duplicates": 0, "failed": 0, "issues": [], "total": 1}
+```
+
+不是发送工具。
+
+### `merge_contacts`
+
+```json
+{"source_id": "contact_duplicate", "target_id": "contact_primary"}
+```
+
+把 source 的消息和频道 handle 移到 target，删除 source；本地操作，不联系任何人。
 
 ### `mark_message_read`
 
@@ -390,7 +456,7 @@ secretary-mcp [--home <dir>]
 - `cancel_task`
 - `get_procedural_pattern`
 
-服务端 `tools/list` 只有 16 个整理器工具。任何旧客户端调用会收到“Unknown tool”错误。
+服务端 `tools/list` 只有 19 个整理器工具。任何旧客户端调用会收到“Unknown tool”错误。
 
 ## 5. 只读策略
 

@@ -238,14 +238,21 @@ public final class MemoryService {
         channel: String? = nil,
         contactID: String? = nil,
         unreadOnly: Bool = false,
+        query: String? = nil,
         limit: Int = 100
     ) throws -> [ContactMessage] {
         try store.listMessages(
             channel: channel,
             contactID: contactID,
             unreadOnly: unreadOnly,
+            query: query,
             limit: max(1, min(limit, 500))
         )
+    }
+
+    @discardableResult
+    public func mergeContacts(targetID: String, sourceID: String, now: Date = Date()) throws -> Contact? {
+        try store.mergeContacts(targetID: targetID, sourceID: sourceID, now: now)
     }
 
     @discardableResult
@@ -265,6 +272,38 @@ public final class MemoryService {
         now: Date = Date()
     ) throws -> SemanticFact? {
         try store.correctFact(id: id, statement: correctedStatement, action: action, at: now)
+    }
+
+    public func brief(
+        dayKey: String? = nil,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) throws -> DailyBrief {
+        let key: String
+        let interval: DateInterval
+        if let dayKey {
+            guard let parsed = DateCoding.parseDay(dayKey, calendar: calendar),
+                  let dayInterval = DateCoding.dayInterval(dayKey: dayKey, calendar: calendar) else {
+                throw MemoryServiceError.invalidArgument("date must be yyyy-MM-dd")
+            }
+            key = DateCoding.dayKey(parsed, calendar: calendar)
+            interval = dayInterval
+        } else {
+            key = DateCoding.dayKey(now, calendar: calendar)
+            interval = DateCoding.dayInterval(for: now, calendar: calendar)
+        }
+        let timeline = try timeline(in: interval, includeFacts: true, limit: 500)
+        return DailyBrief(
+            date: key,
+            generatedAt: now,
+            from: interval.start,
+            to: interval.end,
+            timeline: timeline.entries,
+            openTodos: try store.openTodos(limit: 200),
+            unreadMessages: try store.listMessages(unreadOnly: true, limit: 50),
+            contacts: try store.listContacts(limit: 50),
+            counts: try store.counts()
+        )
     }
 
     public func status(now: Date = Date()) throws -> ServiceStatus {

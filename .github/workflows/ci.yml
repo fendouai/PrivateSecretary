@@ -1,9 +1,10 @@
-name: ci
+name: macOS verification
 
+# Manual by default: GitHub-hosted macOS runners require a paid plan for private
+# repositories. Run `make verify` locally; configure a macOS runner and dispatch
+# this workflow when one is available.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   verify:

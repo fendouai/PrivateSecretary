@@ -66,6 +66,14 @@ public final class MCPToolCatalog {
                 readOnly: false
             ),
             tool(
+                name: "get_brief",
+                description: "Read-only daily brief: timeline, open todos, unread messages and contacts. This is the recommended session-start view.",
+                schema: objectSchema(properties: [
+                    "date": ["type": "string", "description": "yyyy-MM-dd; defaults to today."]
+                ], required: []),
+                readOnly: true
+            ),
+            tool(
                 name: "list_todos",
                 description: "List todos captured from explicit intents. Todos are for the user; this server never executes them.",
                 schema: objectSchema(properties: [
@@ -131,6 +139,7 @@ public final class MCPToolCatalog {
                     "channel": ["type": "string"],
                     "contact_id": ["type": "string"],
                     "unread_only": ["type": "boolean"],
+                    "query": ["type": "string", "description": "Optional full-text query over message bodies and contact names."],
                     "limit": ["type": "integer", "minimum": 1, "maximum": 500]
                 ], required: []),
                 readOnly: true
@@ -149,6 +158,28 @@ public final class MCPToolCatalog {
                     "external_id": ["type": "string"],
                     "is_read": ["type": "boolean"]
                 ], required: ["channel", "contact_name", "text"]),
+                readOnly: false
+            ),
+            tool(
+                name: "import_messages",
+                description: "Batch-archive messages from local channel adapters. Accepts up to 500 objects; duplicates are ignored. Never sends anything.",
+                schema: objectSchema(properties: [
+                    "messages": [
+                        "type": "array",
+                        "maxItems": 500,
+                        "items": ["type": "object", "additionalProperties": true]
+                    ],
+                    "default_channel": ["type": "string"]
+                ], required: ["messages"]),
+                readOnly: false
+            ),
+            tool(
+                name: "merge_contacts",
+                description: "Merge a duplicate contact into a target contact. Moves messages and channel handles locally; does not contact anyone.",
+                schema: objectSchema(properties: [
+                    "source_id": ["type": "string"],
+                    "target_id": ["type": "string"]
+                ], required: ["source_id", "target_id"]),
                 readOnly: false
             ),
             tool(
@@ -332,6 +363,10 @@ public final class MCPRouter {
                 let key = try optionalDateString(arguments["date"])
                 let report = try service.generateDigest(dayKey: key)
                 return MCPToolResult(text: try encode(report))
+            case "get_brief":
+                let key = try optionalDateString(arguments["date"])
+                let brief = try service.brief(dayKey: key)
+                return MCPToolResult(text: try encode(brief))
             case "list_todos":
                 let rawStatus = arguments["status"] as? String
                 let parsedStatus = try todoStatusArgument(rawStatus)
@@ -386,6 +421,7 @@ public final class MCPRouter {
                     channel: arguments["channel"] as? String,
                     contactID: arguments["contact_id"] as? String,
                     unreadOnly: (arguments["unread_only"] as? Bool) ?? false,
+                    query: arguments["query"] as? String,
                     limit: int(arguments["limit"]) ?? 100
                 )
                 return MCPToolResult(text: try encode(MessagesResult(messages: messages)))
@@ -407,6 +443,25 @@ public final class MCPRouter {
                     "status": "recorded",
                     "message": try encodeObject(message)
                 ]))
+            case "import_messages":
+                guard let messages = arguments["messages"] as? [[String: Any]] else {
+                    throw MemoryServiceError.invalidArgument("messages must be an array of objects")
+                }
+                let data = try JSONSerialization.data(withJSONObject: messages)
+                let report = try MessageImporter(service: service).importJSON(
+                    data,
+                    defaultChannel: arguments["default_channel"] as? String
+                )
+                return MCPToolResult(text: try encode(report))
+            case "merge_contacts":
+                let sourceID = try string(arguments, "source_id")
+                let targetID = try string(arguments, "target_id")
+                guard let contact = try service.mergeContacts(targetID: targetID, sourceID: sourceID) else {
+                    throw MemoryServiceError.notFound("contact")
+                }
+                var payload = try encodeObject(contact)
+                payload["status"] = "merged"
+                return MCPToolResult(text: jsonText(payload))
             case "mark_message_read":
                 let id = try string(arguments, "message_id")
                 let isRead = (arguments["is_read"] as? Bool) ?? true

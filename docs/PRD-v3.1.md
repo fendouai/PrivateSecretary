@@ -43,7 +43,7 @@ v3.0 的目标是 L1 → L4 的意图直执。v3.1 明确取消这一层：
 - 保留显式意图捕获，但产物是 `TodoItem`；
 - Skill 改为只读整理与呈现。
 
-### 1.3 三层核心体验
+### 1.3 四个核心体验
 
 #### 体验一：记忆 timeline
 
@@ -65,7 +65,13 @@ Todo 具有：
 
 Codex 可以读取、添加、更新 todo；不能替用户执行 todo，也不存在“claim”或“完成动作”的工具。
 
-#### 体验三：contact list / message list
+#### 体验三：daily brief 与本地 dashboard
+
+`secretary brief` / MCP `get_brief` 一次返回 timeline、open todos、未读消息和联系人。`secretary dashboard` 生成自包含只读 HTML，无 JavaScript、无远程资源，方便本地查看。
+
+![Private Secretary 本地 dashboard](assets/dashboard.png)
+
+#### 体验四：contact list / message list
 
 不同渠道的消息通过本地适配器写入：
 
@@ -239,22 +245,24 @@ SQLite WAL + FTS5，单文件 `~/.private-secretary/secretary.sqlite`，schema v
 | `recall` | 混合检索摘要 |
 | `drill_down` | 展开完整记忆 |
 | `get_timeline` | 按时间返回 L2/L3 timeline |
+| `get_brief` | 一次返回 timeline + todo + 未读消息 + 联系人 |
 | `get_digest` / `generate_daily_digest` | 读取/生成日报 |
 | `list_todos` / `add_todo` / `update_todo` | 用户 todo list |
 | `list_contacts` / `upsert_contact` | 联系人列表 |
-| `list_messages` / `record_message` / `mark_message_read` | 消息归档 |
+| `list_messages` / `record_message` / `import_messages` | 消息归档与批量导入 |
+| `merge_contacts` / `mark_message_read` | 联系人与已读治理 |
 | `list_review_items` / `review_fact` | 事实治理 |
 | `get_status` | 健康状态 |
 
-**没有** `claim_task`、`complete_task`、`cancel_task`、`get_pending_tasks`、`get_procedural_pattern`。
+共 19 个工具。**没有** `claim_task`、`complete_task`、`cancel_task`、`get_pending_tasks`、`get_procedural_pattern`。
 
 ### 3.3 渠道适配器
 
 当前参考实现不内置 WeChat/Lark/Email 客户端，而是提供统一的本地写入协议：
 
-- CLI：`secretary message add` / `secretary contact add`；
+- CLI：`secretary message add` / `secretary message import` / `secretary contact add`；
 - Unix socket：`{"op":"message", ...}` / `{"op":"contact", ...}`；
-- MCP：`record_message` / `upsert_contact`。
+- MCP：`record_message` / `import_messages` / `upsert_contact`。
 
 真实渠道接入应由独立适配器完成，再将结构化消息写入。适配器不授予 PrivateSecretary 发送权限。
 

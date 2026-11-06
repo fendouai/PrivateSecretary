@@ -75,7 +75,7 @@ private func readLine(from handle: FileHandle) -> String? {
     """.utf8 + Data("\n".utf8)))
     let toolsLine = try #require(readLine(from: output.fileHandleForReading))
     let tools = jsonObject(toolsLine)["result"] as? [String: Any]
-    #expect((tools?["tools"] as? [[String: Any]])?.count == 16)
+    #expect((tools?["tools"] as? [[String: Any]])?.count == 19)
     try input.fileHandleForWriting.close()
     process.waitUntilExit()
     #expect(process.terminationStatus == 0)
@@ -237,4 +237,79 @@ private func runAndCapture(_ executable: String, _ arguments: [String]) throws -
     #expect(state == "capture_unavailable")
     process.terminate()
     process.waitUntilExit()
+}
+
+@Test func cliBriefDashboardImportAndMerge() throws {
+    let executable = debugBinary("secretary")
+    guard FileManager.default.isExecutableFile(atPath: executable) else {
+        Issue.record("missing \(executable); run swift build")
+        return
+    }
+    let home = try temporaryHome()
+    defer { try? FileManager.default.removeItem(at: home) }
+    _ = try runAndCapture(executable, ["--home", home.path, "init"])
+    _ = try runAndCapture(executable, [
+        "--home", home.path, "ingest",
+        "帮我记一下周五前提交 HNSW 参数对比"
+    ])
+
+    let importFile = home.appendingPathComponent("messages.jsonl")
+    try """
+    {"channel":"email","contact_name":"张三","handle":"zs@example.com","text":"参数对比请周五前发我","external_id":"cli-1"}
+    {"channel":"lark","contact_name":"张三","handle":"zs_lark","text":"评审改到周一下午","external_id":"cli-2"}
+    """.write(to: importFile, atomically: true, encoding: .utf8)
+    let imported = try runAndCapture(executable, [
+        "--home", home.path, "message", "import", "--file", importFile.path
+    ])
+    #expect(imported.status == 0, "stderr: \(imported.stderr)")
+    #expect(imported.stdout.contains("Imported 2"))
+
+    let contacts = try runAndCapture(executable, ["--home", home.path, "contacts", "--json"])
+    #expect(contacts.status == 0)
+    let contactPayload = jsonObject(contacts.stdout)
+    let contactObjects = contactPayload["contacts"] as? [[String: Any]] ?? []
+    #expect(contactObjects.count == 1)
+    #expect((contactObjects.first?["channels"] as? [[String: Any]])?.count == 2)
+
+    let added = try runAndCapture(executable, [
+        "--home", home.path, "contact", "add",
+        "--name", "李四", "--channel", "lark:lisi_lark"
+    ])
+    #expect(added.status == 0, "stderr: \(added.stderr)")
+    let contactPayload2 = jsonObject(try runAndCapture(
+        executable,
+        ["--home", home.path, "contacts", "--json"]
+    ).stdout)
+    let allContacts = contactPayload2["contacts"] as? [[String: Any]] ?? []
+    let sourceID = try #require(allContacts.first { $0["displayName"] as? String == "李四" }?["id"] as? String)
+    let targetID = try #require(allContacts.first { $0["displayName"] as? String == "张三" }?["id"] as? String)
+    let merged = try runAndCapture(executable, [
+        "--home", home.path, "contact", "merge", sourceID, "--into", targetID
+    ])
+    #expect(merged.status == 0, "stderr: \(merged.stderr)")
+    let afterMerge = jsonObject(try runAndCapture(
+        executable,
+        ["--home", home.path, "contacts", "--json"]
+    ).stdout)
+    #expect((afterMerge["count"] as? Int) == 1)
+
+    let brief = try runAndCapture(executable, ["--home", home.path, "brief", "--json"])
+    #expect(brief.status == 0)
+    let briefObject = jsonObject(brief.stdout)
+    #expect((briefObject["openTodos"] as? [[String: Any]])?.count == 1)
+    #expect((briefObject["unreadMessages"] as? [[String: Any]])?.count == 2)
+
+    let dashboardPath = home.appendingPathComponent("dashboard.html")
+    let dashboard = try runAndCapture(executable, [
+        "--home", home.path, "dashboard", "--output", dashboardPath.path
+    ])
+    #expect(dashboard.status == 0, "stderr: \(dashboard.stderr)")
+    #expect(FileManager.default.fileExists(atPath: dashboardPath.path))
+    let html = try String(contentsOf: dashboardPath, encoding: .utf8)
+    #expect(html.contains("Timeline"))
+    #expect(html.contains("Open todos"))
+    #expect(html.contains("Unread messages"))
+    let attributes = try FileManager.default.attributesOfItem(atPath: dashboardPath.path)
+    let permissions = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0
+    #expect(permissions & 0o077 == 0)
 }

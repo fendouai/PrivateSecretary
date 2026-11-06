@@ -22,6 +22,7 @@ swift build -c release
 ├── secretary.sqlite
 ├── cold/
 ├── logs/
+├── exports/       # read-only HTML dashboards (0600 files)
 ├── run/secretaryd.sock
 └── tmp/
 ```
@@ -127,6 +128,17 @@ curl -L -o ~/.private-secretary/models/ggml-base.bin \
 
 ## 6. 日常操作
 
+### Brief / dashboard
+
+```bash
+secretary brief
+secretary brief 2026-11-06 --json
+secretary dashboard --open
+secretary dashboard 2026-11-06 --output ~/Desktop/ps-brief.html
+```
+
+Dashboard 是 `~/.private-secretary/exports/` 下的自包含只读 HTML（0600）。
+
 ### Timeline
 
 ```bash
@@ -166,9 +178,13 @@ secretary message add \
   --channel email --contact 张三 --handle zhangsan@example.com \
   --direction inbound --text "HNSW 参数对比请周五前发我" \
   --external-id mail-1
+
+secretary message import --file messages.jsonl --channel email
+secretary messages --search benchmark
+secretary contact merge <source_id> --into <target_id>
 ```
 
-`message add` 是归档，不会发送。渠道适配器应通过 CLI、Unix socket 或 MCP `record_message` 写入。
+`message add` / `message import` 是归档，不会发送。渠道适配器应通过 CLI、Unix socket 或 MCP `record_message` / `import_messages` 写入。
 
 ### 记忆
 
@@ -197,8 +213,10 @@ secretary purge --all --yes
      {"op":"message","channel":"lark","contact_name":"张三","handle":"zhangsan_lark","direction":"inbound","text":"..."}
      ```
 
-   - MCP `record_message`。
+   - MCP `record_message` / `import_messages`。
 4. 不授予发送/回复权限。
+
+JSONL 每条至少包含 `contact_name` 与 `text`；`channel` 可在每条或通过 `--channel` 提供。
 
 重复消息由 `(channel, external_id/dedupe_key)` 唯一约束去重。联系人按 handle 优先合并。
 

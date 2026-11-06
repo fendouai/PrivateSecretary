@@ -82,13 +82,14 @@ private struct MCPFixture {
     let names = Set((tools ?? []).compactMap { $0["name"] as? String })
     for required in [
         "recall", "drill_down", "get_timeline", "get_digest", "generate_daily_digest",
-        "list_todos", "add_todo", "update_todo", "list_contacts", "upsert_contact",
-        "list_messages", "record_message", "mark_message_read", "list_review_items",
-        "review_fact", "get_status"
+        "get_brief", "list_todos", "add_todo", "update_todo", "list_contacts",
+        "upsert_contact", "list_messages", "record_message", "import_messages",
+        "merge_contacts", "mark_message_read", "list_review_items", "review_fact",
+        "get_status"
     ] {
         #expect(names.contains(required), "missing \(required)")
     }
-    #expect(names.count == 16)
+    #expect(names.count == 19)
     #expect(!names.contains("claim_task"))
     #expect(!names.contains("complete_task"))
     #expect(!names.contains("get_procedural_pattern"))
@@ -273,4 +274,69 @@ private struct MCPFixture {
     let fixture = try MCPFixture()
     let response = try fixture.call("generate_daily_digest", ["date": "not-a-date"])
     #expect((response["result"] as? [String: Any])?["isError"] as? Bool == true)
+}
+
+@Test func briefToolSummarizesAllViews() throws {
+    let fixture = try MCPFixture()
+    _ = try fixture.env.ingest("帮我记一下周五前提交 HNSW 参数对比", at: fixture.now)
+    _ = try fixture.call("record_message", [
+        "channel": "email",
+        "contact_name": "张三",
+        "handle": "zhangsan@example.com",
+        "text": "请把参数对比发我"
+    ])
+    let response = try fixture.call("get_brief", ["date": DateCoding.dayKey(fixture.now, calendar: fixture.calendar)])
+    #expect((response["result"] as? [String: Any])?["isError"] as? Bool == false)
+    let brief = mcpResultObject(response)
+    #expect((brief["timeline"] as? [[String: Any]])?.isEmpty == false)
+    #expect((brief["openTodos"] as? [[String: Any]])?.count == 1)
+    #expect((brief["unreadMessages"] as? [[String: Any]])?.count == 1)
+    #expect((brief["contacts"] as? [[String: Any]])?.count == 1)
+}
+
+@Test func batchImportSearchAndMergeTools() throws {
+    let fixture = try MCPFixture()
+    let imported = mcpResultObject(try fixture.call("import_messages", [
+        "default_channel": "email",
+        "messages": [
+            [
+                "contact_name": "张三",
+                "handle": "zhangsan@example.com",
+                "direction": "inbound",
+                "text": "HNSW benchmark 结果发我",
+                "external_id": "batch-1"
+            ],
+            [
+                "contact_name": "张三",
+                "handle": "zhangsan@example.com",
+                "direction": "inbound",
+                "text": "HNSW benchmark 结果发我",
+                "external_id": "batch-1"
+            ],
+            [
+                "channel": "lark",
+                "contact_name": "李四",
+                "handle": "lisi_lark",
+                "text": "评审改到周五"
+            ]
+        ]
+    ]))
+    #expect(imported["imported"] as? Int == 2)
+    #expect(imported["duplicates"] as? Int == 1)
+    let search = mcpResultObject(try fixture.call("list_messages", ["query": "benchmark"]))
+    #expect(search["count"] as? Int == 1)
+    let contacts = mcpResultObject(try fixture.call("list_contacts", [:]))
+    let list = contacts["contacts"] as? [[String: Any]]
+    #expect(list?.count == 2)
+    let target = try #require(list?.first { $0["displayName"] as? String == "张三" }?["id"] as? String)
+    let source = try #require(list?.first { $0["displayName"] as? String == "李四" }?["id"] as? String)
+    let merged = mcpResultObject(try fixture.call("merge_contacts", [
+        "source_id": source,
+        "target_id": target
+    ]))
+    #expect(merged["status"] as? String == "merged")
+    #expect((merged["channels"] as? [[String: Any]])?.count == 2)
+    let after = mcpResultObject(try fixture.call("list_contacts", [:]))
+    #expect(after["count"] as? Int == 1)
+    #expect(try fixture.env.store.listMessages(contactID: target).count == 2)
 }

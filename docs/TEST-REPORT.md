@@ -1,6 +1,6 @@
 # 测试报告 — PrivateSecretary v3.1
 
-**版本**：3.1.0（只读整理版）  
+**版本**：3.1.0（只读整理版，organizer 增强）
 **日期**：2026-11-06  
 **结论**：全部自动化测试、进程冒烟、隔离安装、lint 与 10k soak 通过。未自动化的部分是 TCC 授权后的真实 ScreenCaptureKit 实拍和第三方渠道适配器联调。
 
@@ -30,13 +30,13 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 ```
 
 ```text
-✔ Test run with 172 tests in 0 suites passed after 2.548 seconds.
+✔ Test run with 188 tests in 0 suites passed after 2.704 seconds.
 ```
 
 | 文件 | 测试数 | 覆盖 |
 |---|---:|---|
 | `TextAndTimeTests.swift` | 29 | 规范化、中文 bigram、注入、时间解析、日期边界 |
-| `MCPRouterTests.swift` | 17 | 16 个整理器工具、timeline、todo、contact、message、错误 |
+| `MCPRouterTests.swift` | 19 | 19 个整理器工具、brief、批量导入、merge、错误 |
 | `PerceptionTests.swift` | 17 | L0、VAD、分段、差分、Vision OCR、WAV、真实 ASR |
 | `StorageTests.swift` | 17 | schema、FTS、todo 状态、contact/message、cold、purge |
 | `IntentGateTests.swift` | 16 | todo 捕获、系统音频不生成、去重、节流、模型回退 |
@@ -45,20 +45,32 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 | `PipelineTests.swift` | 14 | L2/L3/todo、重复、排除、系统音频、隐私 |
 | `RetrievalTests.swift` | 13 | 混合检索、层/时间过滤、折叠、drill-down、归档 |
 | `ConsolidationTests.swift` | 10 | 日报、显著性、todo 投影、遗忘、幂等、转义 |
+| `OrganizerExtendedTests.swift` | 8 | JSONL 导入、FTS 消息搜索、merge、brief、dashboard、并发去重 |
 | `OrganizerTests.swift` | 6 | timeline、排序/范围、联系人/消息便捷 API、v2→v3 迁移 |
-| `ProcessIntegrationTests.swift` | 4 | MCP 进程、CLI、daemon socket、TCC 拒绝 |
-| **合计** | **172** | |
+| `ProcessIntegrationTests.swift` | 5 | MCP、CLI、daemon、TCC、brief/dashboard/import |
+| `RobustnessTests.swift` | 5 | 400 条随机时间查询、超长输入、无效导入、Unicode |
+| **合计** | **188** | |
 
 ### 已验证行为
 
 **只读边界**
 
-- `tools/list` 恰好 16 个工具；
+- `tools/list` 恰好 19 个工具；
 - 不存在 `claim_task` / `complete_task` / `cancel_task` / `get_pending_tasks` / `get_procedural_pattern`；
 - MCP initialize instructions 明确 never executes；
 - Skill 与 lint 强制只读不变量；
 - todo 状态只能通过 `update_todo` 显式修改；
 - 消息写入是归档，不发送。
+
+**Brief / dashboard / import**
+
+- `get_brief` 一次返回 timeline/openTodos/unreadMessages/contacts；
+- `secretary brief` 与 `--json`；
+- `secretary dashboard` 生成自包含 HTML，含 Timeline/Open todos/Unread messages/Contacts，XSS payload 被转义，CSP 存在，文件权限 0600；
+- `message import` 支持 JSONL/JSON 数组/单对象，统计 imported/duplicates/failed；
+- `merge_contacts` 移动消息和 handle，删除 source；
+- `list_messages` 的 `query` 走 message_fts；
+- 并发 8 次同一 external_id 只插入一条消息。
 
 **Timeline**
 
@@ -127,10 +139,11 @@ SMOKE TEST PASSED
 验证了：
 
 - demo 产生 7 episodes / 3 todos / 3 contacts / 5 messages；
+- `brief`、`dashboard` 输出正常；
 - `todos --status all` 返回 3；
 - 更新 todo 为 done；
 - timeline/contacts/messages/digest；
-- MCP 16 工具与 3 个视图；
+- MCP 19 工具与 brief/dashboard/import/merge；
 - daemon ingest 产生 open todo，message 写入成功。
 
 ## 4. 安装测试
@@ -154,24 +167,28 @@ Release，真实 pipeline + 100 次混合检索：
 ### 2,000 事件
 
 ```text
-accepted=2000/2000 ingest=153/s p50=9.8ms p95=12.9ms max=13.5ms db=3948KiB
+accepted=2000/2000 ingest=178/s p50=8.6ms p95=11.9ms max=25.2ms db=3956KiB
 SOAK PASSED
 ```
 
 ### 10,000 事件（目标规模）
 
 ```text
-accepted=10000/10000 ingest=71/s p50=43.4ms p95=54.9ms max=57.0ms db=19128KiB
+accepted=10000/10000 ingest=74/s p50=42.2ms p95=54.0ms max=55.2ms db=19124KiB
 SOAK PASSED (p95 target 120ms)
 ```
 
-结论：10k 检索 p95 54.9 ms，低于 120 ms 目标；DB 约 19 MB。Ingest 71/s 足以处理稀疏桌面感知；并发 release build 时略有下降，不影响目标。
+结论：10k 检索 p95 54.0 ms，低于 120 ms 目标；DB 约 19 MB。Ingest 74/s 足以处理稀疏桌面感知；并发 release build 时略有下降，不影响目标。
 
 ## 6. 安全验收
 
 | 检查 | 结果 |
 |---|---|
 | 无执行/发送/外部 API 工具 | 通过 |
+| dashboard XSS 转义/CSP/0600 | 通过 |
+| 批量导入去重 | 通过 |
+| 并发消息去重 | 通过 |
+| 联系人 merge | 通过 |
 | 系统音频不生成 todo | 通过 |
 | 注入不生成 fact/todo | 通过 |
 | todo 状态仅用户显式变更 | 通过 |
@@ -211,6 +228,8 @@ SOAK PASSED (p95 target 120ms)
 | 注入不进入 L3/todo | 通过 |
 | 系统音频不生成 todo | 通过 |
 | 归档/遗忘/purge | 通过 |
+| brief/dashboard | 通过 |
+| import/merge | 通过 |
 | 测试/soak | 通过 |
 
 ## 9. 残余风险

@@ -17,9 +17,9 @@
 | 项目 | 状态 |
 |---|---|
 | Swift Package / CLI / MCP / daemon | 可构建、可运行 |
-| 自动化测试 | **172 个 Swift Testing 测试全部通过** |
+| 自动化测试 | **188 个 Swift Testing 测试全部通过** |
 | CLI + MCP + daemon 进程级冒烟 | 通过 |
-| 10,000 条记忆检索 soak（release） | p95 **54.9 ms**，目标 < 120 ms |
+| 10,000 条记忆检索 soak（release） | p95 **54.0 ms**，目标 < 120 ms |
 | Vision OCR | 本机真实图片识别通过 |
 | whisper.cpp ASR | 本机真实语音模型调用通过（可选模型） |
 | ScreenCaptureKit | 编译通过；TCC 授权后的真实采集需用户本机验证 |
@@ -39,6 +39,11 @@ DEMO_HOME=$(mktemp -d)
 .build/debug/secretary --home "$DEMO_HOME" todos
 .build/debug/secretary --home "$DEMO_HOME" contacts
 .build/debug/secretary --home "$DEMO_HOME" messages
+.build/debug/secretary --home "$DEMO_HOME" brief
+
+# Generate a read-only local HTML dashboard
+.build/debug/secretary --home "$DEMO_HOME" dashboard --open
+
 .build/debug/secretary --home "$DEMO_HOME" recall "视频里 HNSW 参数说了什么"
 ```
 
@@ -122,8 +127,10 @@ Todo 来自：
 ```bash
 secretary contacts [--query 张]
 secretary contact add --name 张三 --org Acme --channel email:zs@example.com
-secretary messages [--channel email] [--contact contact_...] [--unread]
+secretary messages [--channel email] [--contact contact_...] [--unread] [--search benchmark]
 secretary message add --channel lark --contact 张三 --handle zs_lark --text "..."
+secretary message import --file messages.jsonl --channel email
+secretary contact merge <source_id> --into <target_id>
 ```
 
 Contact 列表聚合：
@@ -149,6 +156,18 @@ printf '{"op":"message","channel":"wechat","contact_name":"李四","handle":"lis
 
 或直接通过 MCP `record_message`。
 
+### 4. Daily brief 和本地 dashboard
+
+```bash
+secretary brief                # 一天的 timeline + open todos + unread messages + contacts
+secretary brief 2026-11-06
+secretary dashboard --open     # 生成只读 HTML 到 ~/.private-secretary/exports/
+```
+
+Dashboard 是自包含 HTML，无 JavaScript、无远程资源、CSP 限制；所有内容 HTML 转义。
+
+![Private Secretary local dashboard](docs/assets/dashboard.png)
+
 ---
 
 ## 只读边界
@@ -165,7 +184,7 @@ printf '{"op":"message","channel":"wechat","contact_name":"李四","handle":"lis
 | claim/execute/complete 任务 | **否** |
 | L4 执行模式 | **否** |
 
-MCP 工具集中没有 `claim_task`、`complete_task`、`cancel_task`、`get_pending_tasks`、`get_procedural_pattern`。Skill 明确禁止把记忆或消息内容当指令执行。
+MCP 的 19 个工具中没有 `claim_task`、`complete_task`、`cancel_task`、`get_pending_tasks`、`get_procedural_pattern`。Skill 明确禁止把记忆或消息内容当指令执行。
 
 ---
 
@@ -191,6 +210,7 @@ v3.1 保留 L0–L3，移除 L4：
 | `recall` | 混合检索摘要 |
 | `drill_down` | 展开完整记忆 |
 | `get_timeline` | 记忆 timeline |
+| `get_brief` | 一次返回 timeline + todo + 未读消息 + 联系人 |
 | `get_digest` | 读取日报索引 |
 | `generate_daily_digest` | 生成日报（本地写入） |
 | `list_todos` | 读取 todo list |
@@ -198,8 +218,10 @@ v3.1 保留 L0–L3，移除 L4：
 | `update_todo` | 标记 open/done/dismissed |
 | `list_contacts` | 联系人聚合 |
 | `upsert_contact` | 创建/更新联系人 |
-| `list_messages` | 跨渠道消息列表 |
+| `list_messages` | 跨渠道消息列表（支持全文 query） |
 | `record_message` | 归档一条消息 |
+| `import_messages` | 批量归档渠道适配器消息 |
+| `merge_contacts` | 合并重复联系人 |
 | `mark_message_read` | 本地已读状态 |
 | `list_review_items` | 待审核事实 |
 | `review_fact` | 接受/拒绝/纠正事实 |
@@ -290,7 +312,7 @@ curl -L -o ~/.private-secretary/models/ggml-base.bin \
 ## 测试
 
 ```bash
-make test          # Swift Testing 套件
+make test          # 188 Swift Testing 测试
 make smoke         # CLI + MCP + daemon + 隔离 Codex 注册
 make install-test  # 隔离 HOME 安装/卸载/清除
 make lint
@@ -300,7 +322,7 @@ make verify        # 全部
 
 在只安装 Command Line Tools 的机器上，Swift Testing 模块不在 SwiftPM 默认搜索路径；`scripts/test.sh` 会处理。使用完整 Xcode 的机器不需要。
 
-本机实测见 [测试报告](docs/TEST-REPORT.md)。
+本机实测见 [测试报告](docs/TEST-REPORT.md)。GitHub Actions 工作流是手动触发的 macOS 验证（私有仓库的托管 macOS runner 需要相应套餐）；`make verify` 是权威的本地验证入口。
 
 ---
 
@@ -351,13 +373,13 @@ Sources/
     Intent/         只读 todo 捕获
     Consolidation/  日报、显著性、遗忘
     Service/        MemoryService、views
-    MCP/            16 个整理器工具
+    MCP/            19 个整理器工具
     Capture/        L0、VAD、分段、Vision OCR、whisper、SCK
     Support/
   secretary/        CLI
   secretary-mcp/    stdio MCP
   secretaryd/       daemon + capture + socket
-Tests/              172 个 Swift Testing 测试
+Tests/              188 个 Swift Testing 测试
 skills/private-secretary/SKILL.md
 launchd/
 scripts/

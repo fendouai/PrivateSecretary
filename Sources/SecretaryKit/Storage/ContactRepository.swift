@@ -130,8 +130,7 @@ public extension MemoryStore {
         }
     }
 
-    @discardableResult
-    func recordMessage(
+    func recordMessageWithStatus(
         channel rawChannel: String,
         contactName: String,
         handle: String? = nil,
@@ -142,7 +141,7 @@ public extension MemoryStore {
         externalID: String? = nil,
         isRead: Bool? = nil,
         now: Date = Date()
-    ) throws -> ContactMessage {
+    ) throws -> (message: ContactMessage, inserted: Bool) {
         let channel = rawChannel.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !channel.isEmpty, channel.count <= 60 else {
             throw MemoryServiceError.invalidArgument("channel must be a non-empty string (<=60 chars)")
@@ -233,7 +232,34 @@ public extension MemoryStore {
         guard let message = try fetchMessage(id: result.messageID) else {
             throw MemoryServiceError.unavailable("message was written but could not be read back")
         }
-        return message
+        return (message, result.inserted)
+    }
+
+    @discardableResult
+    func recordMessage(
+        channel rawChannel: String,
+        contactName: String,
+        handle: String? = nil,
+        direction: MessageDirection,
+        text rawText: String,
+        timestamp: Date = Date(),
+        thread: String? = nil,
+        externalID: String? = nil,
+        isRead: Bool? = nil,
+        now: Date = Date()
+    ) throws -> ContactMessage {
+        try recordMessageWithStatus(
+            channel: rawChannel,
+            contactName: contactName,
+            handle: handle,
+            direction: direction,
+            text: rawText,
+            timestamp: timestamp,
+            thread: thread,
+            externalID: externalID,
+            isRead: isRead,
+            now: now
+        ).message
     }
 
     func fetchMessage(id: String) throws -> ContactMessage? {
@@ -251,6 +277,7 @@ public extension MemoryStore {
         channel: String? = nil,
         contactID: String? = nil,
         unreadOnly: Bool = false,
+        query: String? = nil,
         limit: Int = 100
     ) throws -> [ContactMessage] {
         try database.read { connection in
@@ -269,6 +296,16 @@ public extension MemoryStore {
                 bindings.append(.text(contactID))
             }
             if unreadOnly { sql += " AND m.is_read = 0" }
+            if let query, !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let tokens = Array(TextAnalyzer.tokens(query).prefix(24))
+                if !tokens.isEmpty {
+                    let ftsQuery = tokens
+                        .map { "\"" + $0.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }
+                        .joined(separator: " OR ")
+                    sql += " AND m.id IN (SELECT message_id FROM message_fts WHERE message_fts MATCH ?)"
+                    bindings.append(.text(ftsQuery))
+                }
+            }
             sql += " ORDER BY m.timestamp DESC LIMIT ?;"
             bindings.append(.integer(Int64(max(1, limit))))
             return try connection.query(sql, bindings).map(Self.message(from:))
@@ -284,6 +321,38 @@ public extension MemoryStore {
             )
         }
         return try fetchMessage(id: id)
+    }
+
+    @discardableResult
+    func mergeContacts(targetID: String, sourceID: String, now: Date = Date()) throws -> Contact? {
+        guard targetID != sourceID else {
+            throw MemoryServiceError.invalidArgument("target and source contact must differ")
+        }
+        let merged: Bool = try database.transaction { connection in
+            guard try connection.query("SELECT id FROM contacts WHERE id = ?;", [.text(targetID)]).first != nil,
+                  try connection.query("SELECT id FROM contacts WHERE id = ?;", [.text(sourceID)]).first != nil else {
+                return false
+            }
+            // Move messages first; contact_id is not part of message uniqueness.
+            try connection.execute(
+                "UPDATE messages SET contact_id = ? WHERE contact_id = ?;",
+                [.text(targetID), .text(sourceID)]
+            )
+            // Re-parent channel handles. `UPDATE OR IGNORE` skips a handle that
+            // already exists on the target; the subsequent delete removes the
+            // skipped duplicate source rows.
+            try connection.execute("""
+            UPDATE OR IGNORE contact_channels SET contact_id = ? WHERE contact_id = ?;
+            """, [.text(targetID), .text(sourceID)])
+            try connection.execute("DELETE FROM contact_channels WHERE contact_id = ?;", [.text(sourceID)])
+            try connection.execute("DELETE FROM contacts WHERE id = ?;", [.text(sourceID)])
+            try connection.execute("UPDATE contacts SET updated_at = ? WHERE id = ?;", [
+                .real(now.epoch), .text(targetID)
+            ])
+            return true
+        }
+        guard merged else { return nil }
+        return try fetchContact(id: targetID)
     }
 
     static func normalizedContactName(_ name: String) -> String {

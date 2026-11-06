@@ -76,6 +76,8 @@ final class CLIRunner {
       drill <memory_id> [--json]
       digest [yyyy-MM-dd] [--json]
       consolidate [yyyy-MM-dd] [--yesterday] [--json]
+      brief [yyyy-MM-dd] [--json]  Timeline + open todos + unread messages + contacts
+      dashboard [yyyy-MM-dd] [--output path] [--open] [--json]
       timeline [yyyy-MM-dd] [--days N] [--no-facts] [--limit N] [--json]
       todos [--status open|done|dismissed|all] [--limit N] [--json]
       todo add <title> [--detail text] [--due ISO-8601]
@@ -84,10 +86,13 @@ final class CLIRunner {
       contacts [--query text] [--limit N] [--json]
       contact add --name <name> [--org text] [--note text]
                   [--channel kind:handle,...]
-      messages [--channel name] [--contact id] [--unread] [--limit N] [--json]
+      messages [--channel name] [--contact id] [--unread] [--search text]
+               [--limit N] [--json]
       message add --channel <name> --contact <name> --text <text>
                   [--handle <id>] [--direction inbound|outbound]
                   [--at ISO-8601] [--thread text] [--external-id id]
+      message import --file <path> | --stdin [--channel default] [--json]
+      contact merge <source_id> --into <target_id>
       review list [--json]
       review accept|reject|correct <fact_id> [--statement text]
       demo                           Seed a safe demo in an empty home
@@ -152,6 +157,8 @@ final class CLIRunner {
         case "drill": try runDrill(service, rest)
         case "digest": try runDigest(service, rest)
         case "consolidate": try runConsolidate(service, rest)
+        case "brief": try runBrief(service, rest)
+        case "dashboard": try runDashboard(service, rest)
         case "timeline": try runTimeline(service, rest)
         case "todos": try runTodos(service, rest)
         case "todo": try runTodo(service, rest)
@@ -375,6 +382,101 @@ final class CLIRunner {
         }
     }
 
+    private func runBrief(_ service: MemoryService, _ tokens: [String]) throws {
+        let args = try CLIArguments(tokens: tokens, valueOptions: ["date"], flagOptions: [])
+        guard args.positionals.count <= 1 else { throw CLIError.message("brief takes at most one date") }
+        let key = args.options["date"] ?? args.positionals.first
+        let brief = try service.brief(dayKey: key)
+        if jsonOutput {
+            print(try Self.jsonString(brief))
+            return
+        }
+        print("# Private Secretary Brief · \(brief.date)")
+        print("")
+        print("Timeline: \(brief.timeline.count) · Open todos: \(brief.openTodos.count) · Unread messages: \(brief.unreadMessages.count) · Contacts: \(brief.contacts.count)")
+        print("")
+        print("## Timeline")
+        if brief.timeline.isEmpty {
+            print("(no memory entries)")
+        } else {
+            for entry in brief.timeline.prefix(20) {
+                let layer = entry.kind == .episode ? "L2" : "L3"
+                print("- \(DateCoding.timeOnly(entry.timestamp)) [\(layer)] \(entry.title) — \(entry.summary)")
+            }
+        }
+        print("")
+        print("## Open todos")
+        if brief.openTodos.isEmpty {
+            print("(none)")
+        } else {
+            for todo in brief.openTodos.prefix(20) {
+                print("- [ ] \(todo.title)  \(todo.id)")
+            }
+        }
+        print("")
+        print("## Unread messages")
+        if brief.unreadMessages.isEmpty {
+            print("(none)")
+        } else {
+            for message in brief.unreadMessages.prefix(20) {
+                print("- \(message.contactName) · \(message.channel): \(TextAnalyzer.truncated(message.text, limit: 160))")
+            }
+        }
+        print("")
+        print("## Contacts")
+        if brief.contacts.isEmpty {
+            print("(none)")
+        } else {
+            for contact in brief.contacts.prefix(20) {
+                print("- \(contact.displayName) · \(contact.messageCount) messages")
+            }
+        }
+    }
+
+    private func runDashboard(_ service: MemoryService, _ tokens: [String]) throws {
+        let args = try CLIArguments(
+            tokens: tokens,
+            valueOptions: ["date", "output"],
+            flagOptions: ["open"]
+        )
+        guard args.positionals.count <= 1 else { throw CLIError.message("dashboard takes at most one date") }
+        let key = args.options["date"] ?? args.positionals.first
+        let brief = try service.brief(dayKey: key)
+        let html = DashboardRenderer.render(brief)
+        let output: URL
+        if let path = args.options["output"] {
+            output = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+        } else {
+            try FileManager.default.createDirectory(
+                at: service.paths.exportsDirectory,
+                withIntermediateDirectories: true
+            )
+            output = service.paths.exportsDirectory
+                .appendingPathComponent("dashboard-\(brief.date).html")
+        }
+        try FileManager.default.createDirectory(
+            at: output.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try html.write(to: output, atomically: true, encoding: .utf8)
+        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: output.path)
+        if args.flags.contains("open") {
+            _ = try? CommandRunner.run(executable: "/usr/bin/open", arguments: [output.path], timeoutSeconds: 5)
+        }
+        if jsonOutput {
+            print(try Self.jsonText([
+                "path": output.path,
+                "date": brief.date,
+                "timeline": brief.timeline.count,
+                "open_todos": brief.openTodos.count,
+                "unread_messages": brief.unreadMessages.count
+            ]))
+        } else {
+            print("Dashboard written to \(output.path)")
+            print("Timeline \(brief.timeline.count) · open todos \(brief.openTodos.count) · unread messages \(brief.unreadMessages.count)")
+        }
+    }
+
     private func runTimeline(_ service: MemoryService, _ tokens: [String]) throws {
         let args = try CLIArguments(
             tokens: tokens,
@@ -514,8 +616,28 @@ final class CLIRunner {
     }
 
     private func runContact(_ service: MemoryService, _ tokens: [String]) throws {
+        if tokens.first == "merge" {
+            let args = try CLIArguments(
+                tokens: Array(tokens.dropFirst()),
+                valueOptions: ["into"],
+                flagOptions: []
+            )
+            guard let sourceID = args.positionals.first,
+                  let targetID = args.options["into"], !targetID.isEmpty else {
+                throw CLIError.message("contact merge requires <source_id> --into <target_id>")
+            }
+            guard let contact = try service.mergeContacts(targetID: targetID, sourceID: sourceID) else {
+                throw CLIError.message("Contact not found: \(sourceID) or \(targetID)")
+            }
+            if jsonOutput {
+                print(try Self.jsonString(contact))
+            } else {
+                print("Merged \(sourceID) into \(contact.id) (\(contact.displayName))")
+            }
+            return
+        }
         guard tokens.first == "add" else {
-            throw CLIError.message("contact requires add")
+            throw CLIError.message("contact requires add|merge")
         }
         let args = try CLIArguments(
             tokens: Array(tokens.dropFirst()),
@@ -542,13 +664,14 @@ final class CLIRunner {
     private func runMessages(_ service: MemoryService, _ tokens: [String]) throws {
         let args = try CLIArguments(
             tokens: tokens,
-            valueOptions: ["channel", "contact", "limit"],
+            valueOptions: ["channel", "contact", "search", "limit"],
             flagOptions: ["unread"]
         )
         let messages = try service.messages(
             channel: args.options["channel"],
             contactID: args.options["contact"],
             unreadOnly: args.flags.contains("unread"),
+            query: args.options["search"],
             limit: args.options["limit"].flatMap(Int.init) ?? 100
         )
         if jsonOutput {
@@ -566,8 +689,36 @@ final class CLIRunner {
     }
 
     private func runMessage(_ service: MemoryService, _ tokens: [String]) throws {
+        if tokens.first == "import" {
+            let args = try CLIArguments(
+                tokens: Array(tokens.dropFirst()),
+                valueOptions: ["file", "channel"],
+                flagOptions: ["stdin"]
+            )
+            let data: Data
+            if let file = args.options["file"] {
+                data = try Data(contentsOf: URL(fileURLWithPath: (file as NSString).expandingTildeInPath))
+            } else if args.flags.contains("stdin") {
+                data = FileHandle.standardInput.readDataToEndOfFile()
+            } else {
+                throw CLIError.message("message import requires --file or --stdin")
+            }
+            let report = try MessageImporter(service: service).importJSON(
+                data,
+                defaultChannel: args.options["channel"]
+            )
+            if jsonOutput {
+                print(try Self.jsonString(report))
+            } else {
+                print("Imported \(report.imported) · duplicates \(report.duplicates) · failed \(report.failed)")
+                for issue in report.issues {
+                    print("  #\(issue.index): \(issue.error)")
+                }
+            }
+            return
+        }
         guard tokens.first == "add" || tokens.first == "record" else {
-            throw CLIError.message("message requires add")
+            throw CLIError.message("message requires add|import")
         }
         let args = try CLIArguments(
             tokens: Array(tokens.dropFirst()),

@@ -79,7 +79,7 @@ L2 Episode INSERT
 - 按时间戳升序返回；最多 `limit` 条，取最近 limit 条后升序；
 - 每条只含摘要 ≤240 字符、来源 id、trust。
 
-Timeline 不经过相关性排序，不混入消息；消息是独立视图。
+Timeline 不经过相关性排序，不混入消息；消息是独立视图。`dailyBrief` 把 timeline、open todos、unread messages、contacts 组合成一个只读快照；`DashboardRenderer` 把它渲染为自包含、HTML 转义、CSP 限制的只读 HTML。
 
 ### 3.3 巩固
 
@@ -191,9 +191,23 @@ open ⇄ dismissed
 6. 插入 message + FTS；
 7. 更新 contact 时间。
 
-`listContacts` 用聚合查询返回消息数、最近消息时间和摘要；`listMessages` 按 timestamp 倒序，可 filter channel/contact/unread。
+`listContacts` 用聚合查询返回消息数、最近消息时间和摘要；`listMessages` 按 timestamp 倒序，可 filter channel/contact/unread/query（message_fts）。
+
+`mergeContacts` 在一个事务中把 source 的消息和 channel handles 移到 target，再删除 source；`importMessages` 支持 JSON 数组/JSONL 批量归档并去重。
 
 **不发送消息。** 这是归档 API。
+
+## 6.1 MCP / CLI 视图
+
+MCP 的 19 个工具分为：
+
+- 记忆：`recall`、`drill_down`、`get_timeline`、`get_digest`、`generate_daily_digest`、`get_brief`；
+- todo：`list_todos`、`add_todo`、`update_todo`；
+- contact/message：`list_contacts`、`upsert_contact`、`merge_contacts`、`list_messages`、`record_message`、`import_messages`、`mark_message_read`；
+- 治理：`list_review_items`、`review_fact`；
+- 状态：`get_status`。
+
+CLI 额外提供 `secretary dashboard`（静态 HTML）与 `secretary message import`。
 
 ## 7. 安全边界
 

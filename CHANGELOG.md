@@ -8,7 +8,7 @@
 
 - 移除任务执行：删除 claim/complete/cancel、执行日志、任务风险/确认策略与 L4 程序性记忆。
 - 显式意图现在生成 `TodoItem`，状态只由用户通过 CLI/MCP 显式变更。
-- MCP 从执行工具转为 16 个只读整理器工具：timeline、todos、contacts、messages、recall、digest、review、status。
+- MCP 从执行工具转为 19 个只读整理器工具：timeline、todos、contacts、messages、recall、digest、review、status。
 - Codex Skill 改为只读：不执行、不发送、不修改、不删除、不调用外部 API。
 - 数据 schema 升到 v3；旧 `tasks` 迁移为 `todos`，删除 `execution_logs` 和 `procedural_patterns`。
 - 日报“意图与任务”改为“待办”，统计移除 L4。
@@ -17,12 +17,16 @@
 ### Added
 
 - `get_timeline` / CLI `timeline`：L2+L3 按时间排序的记忆视图。
+- `get_brief` / CLI `brief`：一次返回 timeline、open todos、未读消息、联系人。
+- `dashboard`：自包含只读 HTML（CSP、HTML 转义、0600），无 JS/远程资源。
 - `todos` / `todo add|update|delete` 与 MCP `list_todos` / `add_todo` / `update_todo`。
 - contacts / contact_channels / messages / message_fts schema。
 - `list_contacts` / `upsert_contact` / `list_messages` / `record_message` / `mark_message_read`。
 - 跨频道联系人合并、external_id/内容哈希去重、未读状态。
+- `message import` / `import_messages`：JSON/JSONL 批量归档；`merge_contacts` 合并重复联系人；`list_messages(query:)` FTS 搜索。
+- 并发同 external_id 去重、导入错误报告、Unicode/随机输入鲁棒性测试。
 - Unix socket `message` / `contact` 写入协议。
-- 172 个 Swift Testing 测试与 organizer 测试套件。
+- 188 个 Swift Testing 测试与 organizer/robustness 测试套件。
 
 ### Removed
 
