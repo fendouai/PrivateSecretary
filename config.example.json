@@ -1,0 +1,111 @@
+{
+  "capture" : {
+    "audioRingSeconds" : 60,
+    "frameDiffThreshold" : 0.018,
+    "frameIntervalMilliseconds" : 900,
+    "maximumSegmentSeconds" : 28,
+    "microphoneEnabled" : false,
+    "minimumSpeechMilliseconds" : 420,
+    "ocrLanguages" : [
+      "zh-Hans",
+      "en-US"
+    ],
+    "ocrMinimumConfidence" : 0.35,
+    "ocrMinimumNewCharacters" : 4,
+    "preRollMilliseconds" : 320,
+    "screenRingFrames" : 30,
+    "silenceHangoverMilliseconds" : 720,
+    "vadFrameMilliseconds" : 20,
+    "vadThreshold" : 0.012,
+    "whisperBinary" : "whisper-cli",
+    "whisperLanguage" : "zh",
+    "whisperModel" : "",
+    "whisperThreads" : 4
+  },
+  "consolidation" : {
+    "extractMissingFacts" : true,
+    "maximumClusterGapSeconds" : 600,
+    "maximumDigestEntries" : 20,
+    "maximumEpisodesPerRun" : 5000
+  },
+  "daemon" : {
+    "healthIntervalSeconds" : 30,
+    "maximumRequestBytes" : 2097152
+  },
+  "factGate" : {
+    "duplicateSimilarity" : 0.9,
+    "maximumStatementLength" : 320,
+    "minimumConfidence" : 0.68,
+    "minimumSalience" : 0.28,
+    "model" : {
+      "arguments" : [
+
+      ],
+      "enabled" : false,
+      "executable" : "",
+      "maxOutputBytes" : 1048576,
+      "timeoutSeconds" : 20
+    },
+    "supersedeConfidenceMargin" : 0.08
+  },
+  "intentGate" : {
+    "appThrottleSeconds" : 30,
+    "duplicateSimilarity" : 0.92,
+    "duplicateWindowSeconds" : 120,
+    "enabled" : true,
+    "explicitThreshold" : 0.8,
+    "maximumRoutedTextLength" : 160,
+    "minimumRuleConfidence" : 0.82,
+    "minimumTextLength" : 4,
+    "model" : {
+      "arguments" : [
+
+      ],
+      "enabled" : false,
+      "executable" : "",
+      "maxOutputBytes" : 1048576,
+      "timeoutSeconds" : 20
+    },
+    "uncertainThreshold" : 0.42
+  },
+  "privacy" : {
+    "excludedApplications" : [
+      "Keychain Access",
+      "1Password",
+      "1Password 8",
+      "Bitwarden",
+      "LastPass"
+    ],
+    "purgeColdArchiveOnDelete" : true
+  },
+  "retrieval" : {
+    "candidateLimit" : 10000,
+    "defaultLimit" : 8,
+    "lexicalWeight" : 0.52,
+    "maximumLimit" : 20,
+    "recencyHalfLifeDays" : 30,
+    "recencyWeight" : 0.1,
+    "salienceWeight" : 0.08,
+    "summaryCharacterLimit" : 280,
+    "vectorDimensions" : 384,
+    "vectorWeight" : 0.3
+  },
+  "salience" : {
+    "accessBoostCap" : 0.2,
+    "archiveBelowWeight" : 0.1,
+    "decayHalfLifeDays" : 21,
+    "minimumRetentionDays" : 14,
+    "threshold" : 0.3,
+    "weights" : {
+      "accessFrequency" : 0.12,
+      "emotion" : 0.1,
+      "error" : 0.22,
+      "goalRelevance" : 0.2,
+      "novelty" : 0.18,
+      "reward" : 0.18
+    }
+  },
+  "storage" : {
+    "sqliteBusyTimeoutMilliseconds" : 4000
+  }
+}

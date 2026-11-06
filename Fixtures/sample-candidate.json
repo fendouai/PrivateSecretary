@@ -1,0 +1,13 @@
+{
+  "id": "candidate-manual-001",
+  "capturedAt": "2026-11-06T10:00:00Z",
+  "source": "manual",
+  "audioOrigin": "manual",
+  "application": "Notes",
+  "windowTitle": "每日记录",
+  "transcript": "帮我记一下周五前提交 HNSW 参数对比",
+  "ocrText": "",
+  "ocrRegions": [],
+  "audioDurationSeconds": 0,
+  "screenFrameCount": 0
+}
