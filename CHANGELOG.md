@@ -27,6 +27,7 @@
 - 并发同 external_id 去重、导入错误报告、Unicode/随机输入鲁棒性测试。
 - Unix socket `message` / `contact` 写入协议。
 - 188 个 Swift Testing 测试与 organizer/robustness 测试套件。
+- 独立 `scripts/e2e-test.sh`：socket → SQLite → MCP 19 tools → CLI → dashboard → digest 全软件栈 E2E。
 
 ### Removed
 

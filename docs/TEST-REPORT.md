@@ -167,7 +167,7 @@ Release，真实 pipeline + 100 次混合检索：
 ### 2,000 事件
 
 ```text
-accepted=2000/2000 ingest=178/s p50=8.6ms p95=11.9ms max=25.2ms db=3956KiB
+accepted=2000/2000 ingest=176/s p50=8.7ms p95=11.8ms max=12.3ms db=3952KiB
 SOAK PASSED
 ```
 
@@ -243,12 +243,24 @@ SOAK PASSED (p95 target 120ms)
 7. 无单条消息删除工具（可 purge）。
 8. Swift Testing 的 CLT 路径适配属于环境 workaround。
 
-## 10. 复现
+## 10. E2E
+
+本地软件栈 E2E 单独记录在 [E2E 测试报告](E2E-TEST-REPORT.md)：
+
+```bash
+./scripts/e2e-test.sh
+```
+
+覆盖全新 home、daemon socket、SQLite、MCP 19 tools、CLI、dashboard、digest 和最终状态。
+真实 TCC 采集与 Codex 模型闭环未完成，原因在该报告第 4–6 节。
+
+## 11. 复现
 
 ```bash
 ./scripts/lint.sh
 PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin ./scripts/test.sh
 ./scripts/smoke-test.sh
+./scripts/e2e-test.sh
 ./scripts/install-test.sh
 EVENTS=10000 QUERIES=100 DAYS=7 ./scripts/soak-test.sh
 ./scripts/verify.sh

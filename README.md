@@ -22,8 +22,10 @@
 | 10,000 条记忆检索 soak（release） | p95 **54.0 ms**，目标 < 120 ms |
 | Vision OCR | 本机真实图片识别通过 |
 | whisper.cpp ASR | 本机真实语音模型调用通过（可选模型） |
-| ScreenCaptureKit | 编译通过；TCC 授权后的真实采集需用户本机验证 |
-| LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过 |
+| 本地软件栈 E2E | **通过**（socket → SQLite → MCP → CLI → dashboard → digest） |
+| ScreenCaptureKit | 编译通过；TCC 授权后的真实采集未完成（当前未授权） |
+| LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过；真实登录会话未测试 |
+| Codex 模型驱动闭环 | 未完成（本机账户模型不支持 + usage limit） |
 
 v3.1 移除了 v3.0 的任务执行、claim/complete、执行日志与 L4 程序性记忆。历史方案见 [归档 PRD](docs/archive/PRD-v3.0-execution-baseline.md)，当前方案见 [PRD v3.1](docs/PRD-v3.1.md)。
 
@@ -314,6 +316,7 @@ curl -L -o ~/.private-secretary/models/ggml-base.bin \
 ```bash
 make test          # 188 Swift Testing 测试
 make smoke         # CLI + MCP + daemon + 隔离 Codex 注册
+make e2e           # 全软件栈：socket → DB → MCP → CLI → dashboard → digest
 make install-test  # 隔离 HOME 安装/卸载/清除
 make lint
 make soak          # release 2k 事件 + 100 检索
@@ -322,7 +325,7 @@ make verify        # 全部
 
 在只安装 Command Line Tools 的机器上，Swift Testing 模块不在 SwiftPM 默认搜索路径；`scripts/test.sh` 会处理。使用完整 Xcode 的机器不需要。
 
-本机实测见 [测试报告](docs/TEST-REPORT.md)。GitHub Actions 工作流是手动触发的 macOS 验证（私有仓库的托管 macOS runner 需要相应套餐）；`make verify` 是权威的本地验证入口。
+本机实测见 [测试报告](docs/TEST-REPORT.md) 与 [E2E 测试报告](docs/E2E-TEST-REPORT.md)。GitHub Actions 工作流是手动触发的 macOS 验证；`make verify` 是权威的本地验证入口。
 
 ---
 
@@ -395,6 +398,7 @@ docs/
 - [安全与隐私](docs/SECURITY-PRIVACY.md)
 - [模型适配器](docs/MODEL-ADAPTERS.md)
 - [测试报告](docs/TEST-REPORT.md)
+- [E2E 测试报告](docs/E2E-TEST-REPORT.md)
 - [架构决策](docs/adr/)
 - [历史 PRD v3.0](docs/archive/PRD-v3.0-execution-baseline.md)
 

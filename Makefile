@@ -1,4 +1,4 @@
-.PHONY: build test release demo install uninstall lint smoke install-test soak verify clean
+.PHONY: build test release demo install uninstall lint smoke e2e install-test soak verify clean
 
 build:
 	swift build
@@ -23,6 +23,9 @@ lint:
 
 smoke:
 	./scripts/smoke-test.sh
+
+e2e:
+	./scripts/e2e-test.sh
 
 install-test:
 	./scripts/install-test.sh
