@@ -45,6 +45,8 @@ swift build -c release
 5. `com.privatesecretary.menubar` 登录会话启动菜单栏 App；
 6. Codex Skill + MCP server（除非 `--no-codex`）。
 
+详细授权步骤见 [macOS 授权指引](PERMISSIONS.md)。
+
 ### 权限与数据来源
 
 本产品不申请通讯录、日历、完全磁盘访问或辅助功能权限。唯一可能的 TCC 权限是：

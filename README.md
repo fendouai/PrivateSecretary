@@ -323,6 +323,8 @@ Capture daemon (secretaryd)
 ./scripts/install.sh --no-codex   # 不修改 Codex
 ```
 
+完整步骤见 [macOS 授权指引](docs/PERMISSIONS.md)。最短路径：
+
 然后打开菜单栏 App，在 Overview → Permissions 授予 Screen Recording：
 
 ```bash
@@ -469,6 +471,7 @@ docs/
 - [测试报告](docs/TEST-REPORT.md)
 - [E2E 测试报告](docs/E2E-TEST-REPORT.md)
 - [Agent 接入](docs/AGENT-INTEGRATION.md)
+- [macOS 授权指引](docs/PERMISSIONS.md)
 - [架构决策](docs/adr/)
 - [历史 PRD v3.0](docs/archive/PRD-v3.0-execution-baseline.md)
 
