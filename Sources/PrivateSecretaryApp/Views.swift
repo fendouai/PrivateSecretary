@@ -161,6 +161,9 @@ struct OverviewView: View {
 
                 GroupBox {
                     VStack(alignment: .leading, spacing: 10) {
+                        Text("Only Screen Recording and Microphone are requested. Contacts, Calendar, Full Disk Access and Accessibility are not used.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         PermissionRow(
                             title: "Screen Recording",
                             granted: model.screenPermission,

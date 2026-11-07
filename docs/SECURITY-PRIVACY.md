@@ -122,6 +122,9 @@ Todo 只有 `open/done/dismissed` 本地状态，由用户显式修改。消息�
 
 ## 7. TCC 与采集
 
+- 不接入通讯录、日历、邮件/微信/Lark API；不申请完全磁盘访问、辅助功能、通讯录、日历等权限；
+- 数据只来自本地 ASR 文本、Vision OCR 文本和用户通过 CLI/socket/MCP 导入的文本；
+- 文件导入/离线 OCR 不需要 TCC；实时屏幕/系统音频需要 Screen Recording，麦克风需要 Microphone；
 - Screen Recording 未授权：preflight 失败 → `capture_unavailable`，daemon 保持 socket/MCP；
 - 用户授权后必须重启 daemon；
 - ad-hoc 重签/路径变化可能使 TCC 失效；

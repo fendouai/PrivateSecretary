@@ -380,6 +380,22 @@ make verify        # 全部
 
 ---
 
+## 权限与数据来源
+
+PrivateSecretary 不接入通讯录、日历、邮件/微信/Lark API，也不申请“完全磁盘访问”“辅助功能”“通讯录”“日历”等权限。
+
+数据模型只接收两类输入：
+
+1. **语音识别文本**（本地 whisper.cpp；系统音频需要 Screen Recording TCC，麦克风需要 Microphone TCC）；
+2. **OCR 文本**（本地 Apple Vision；实时屏幕帧需要 Screen Recording TCC）。
+
+因此：
+
+- **手动导入 / 文件处理模式**（JSON、音频文件、图片 OCR）不需要屏幕或麦克风权限；
+- **全天候自动采集模式**只在用户主动开启时才需要上述两项 TCC；
+- 未授权时 daemon 不崩溃、不重试，CLI/MCP/App 仍可读取既有数据；
+- 所有 ASR/OCR 都在本机完成，不上传音频、图片或文本。
+
 ## 隐私
 
 - L0 原始像素/波形只在内存；

@@ -45,6 +45,15 @@ swift build -c release
 5. `com.privatesecretary.menubar` 登录会话启动菜单栏 App；
 6. Codex Skill + MCP server（除非 `--no-codex`）。
 
+### 权限与数据来源
+
+本产品不申请通讯录、日历、完全磁盘访问或辅助功能权限。唯一可能的 TCC 权限是：
+
+- Screen Recording：实时屏幕帧 + 系统音频（ScreenCaptureKit）；
+- Microphone：可选的麦克风输入。
+
+只做文件/JSON/图片导入时不需要任何 TCC。ASR 和 Vision OCR 都在本机执行。
+
 ### Screen Recording 权限
 
 ```bash
