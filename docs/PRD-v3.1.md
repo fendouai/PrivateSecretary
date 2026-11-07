@@ -1,7 +1,7 @@
 # 私人秘书 PrivateSecretary 产品与技术方案 v3.1
 
 **文档版本**：v3.1（只读整理版）  
-**实现版本**：3.1.0  
+**实现版本**：3.2.0
 **适用主机**：Apple Silicon Mac（M2/M3/M4，16 GB 内存基准）  
 **目标 Agent 宿主**：Codex（Skill + MCP）  
 **核心变化**：移除任务执行与 L4 程序性记忆；记忆呈现为 timeline，任务呈现为 todo list，多渠道消息聚合为 contact list / message list。
@@ -99,6 +99,21 @@ secretary messages --channel email --unread
 ```
 
 这是**消息归档**，不是收发客户端。系统永远不会发送回复。
+
+### 1.3.1 产品形态：本地记忆服务 + 菜单栏 App + 多 Agent
+
+PrivateSecretary 不是纯 Skill，也不是宿主内的一个 subagent。最佳形态是三层：
+
+1. **本地记忆服务**（`secretaryd` + SQLite）：持续采集、结构化、巩固、检索；生命周期独立于任何 agent；
+2. **菜单栏 App**（SwiftUI）：负责 TCC onboarding、服务启停、timeline/todo/contacts/messages 浏览、复制上下文、本地 dashboard；
+3. **Agent 接入层**（stdio MCP）：Codex、Claude Desktop、Cursor 或任意 MCP host 都可消费同一份本地记忆；Skill/Agent Policy 只定义使用策略。
+
+用户旅程：
+
+- 首次安装：`scripts/install.sh` 安装 `PrivateSecretary.app`、内嵌 helper 和 LaunchAgents；
+- 授权：Overview → Permissions；
+- 日常：菜单栏查看 brief，点击 timeline 看详情，复制 Markdown context 发给任意 agent；
+- 深度：agent 通过 `get_brief` / `drill_down` / `recall` 读取；本地 todo/message 写操作不触发外部动作。
 
 ### 1.4 隐私与信任模型
 
@@ -261,6 +276,7 @@ SQLite WAL + FTS5，单文件 `~/.private-secretary/secretary.sqlite`，schema v
 当前参考实现不内置 WeChat/Lark/Email 客户端，而是提供统一的本地写入协议：
 
 - CLI：`secretary message add` / `secretary message import` / `secretary contact add`；
+- 菜单栏 App：Timeline / Todos / Contacts / Messages / Permissions / Copy as Context；
 - Unix socket：`{"op":"message", ...}` / `{"op":"contact", ...}`；
 - MCP：`record_message` / `import_messages` / `upsert_contact`。
 
@@ -304,6 +320,7 @@ SQLite WAL + FTS5，单文件 `~/.private-secretary/secretary.sqlite`，schema v
 - 记忆后端：SQLite（CP Memory 风格），`MemoryStore` 边界可替换 Wax。
 - 渠道：通用本地写入，不含第三方登录/同步。
 - TCC 的真实 ScreenCaptureKit 实拍需要本机授权验证。
+- 菜单栏 App、多 Agent 配置与 MCP 握手已纳入本地自动化测试。
 
 ### 5.2 验收标准
 
@@ -328,7 +345,7 @@ SQLite WAL + FTS5，单文件 `~/.private-secretary/secretary.sqlite`，schema v
 - 删除 `execution_logs` 与 `procedural_patterns`；
 - `SecretaryTask`、`TaskRisk`、`ExecutionLog`、`ProceduralPattern` 从代码移除；
 - MCP 执行工具移除；
-- 品牌保持 PrivateSecretary；产品版本 v3.1.0。
+- 品牌保持 PrivateSecretary；产品版本 v3.2.0。
 
 ### 5.4 结论
 

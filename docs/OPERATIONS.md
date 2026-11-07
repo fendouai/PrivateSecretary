@@ -39,10 +39,11 @@ swift build -c release
 安装：
 
 1. release 二进制；
-2. `PrivateSecretaryCapture.app`（TCC 身份）；
+2. `PrivateSecretary.app`（SwiftUI 菜单栏 App + TCC 身份 + 内嵌 daemon/MCP/CLI helper）；
 3. `com.privatesecretary.daemon` 常驻；
 4. `com.privatesecretary.consolidate` 每天 02:30；
-5. Codex Skill + MCP server（除非 `--no-codex`）。
+5. `com.privatesecretary.menubar` 登录会话启动菜单栏 App；
+6. Codex Skill + MCP server（除非 `--no-codex`）。
 
 ### Screen Recording 权限
 
@@ -50,10 +51,10 @@ swift build -c release
 ./scripts/request-permissions.sh
 ```
 
-或手动将以下 app 加入 Screen Recording：
+或打开菜单栏 App → Overview → Permissions → Grant。也可以手动将以下 app 加入 Screen Recording：
 
 ```text
-~/Library/Application Support/PrivateSecretary/PrivateSecretaryCapture.app
+~/Library/Application Support/PrivateSecretary/PrivateSecretary.app
 ```
 
 然后：
@@ -66,9 +67,33 @@ secretary status
 
 `capture.state` 应为 `running`。拒绝授权时是 `capture_unavailable`，daemon 不崩溃、不重试；CLI/MCP 仍可读取历史数据。
 
+### 菜单栏 App
+
+```bash
+open "$HOME/Library/Application Support/PrivateSecretary/PrivateSecretary.app"
+```
+
+- Overview：状态、计数、启动/重启/停止服务、权限、复制 Daily Brief；
+- Timeline：按天浏览、复制单条记忆为 agent context；
+- Todos：本地完成/重开/dismiss；
+- Contacts / Messages：聚合、搜索、未读；
+- Settings：路径、版本、模型、麦克风开关。
+
+App 不执行 todo，不发送消息。
+
+### 多 Agent
+
+```bash
+./scripts/install-agent.sh --host claude
+./scripts/install-agent.sh --host cursor
+./scripts/install-agent.sh --host generic --output mcp.json
+```
+
+同一个 `secretary-mcp` 可供多个 host 使用；详见 [Agent 接入](AGENT-INTEGRATION.md)。
+
 ### 麦克风（可选）
 
-默认只采系统音频。启用：
+默认只采系统音频。可在菜单栏 App → Settings 打开，或编辑配置。启用：
 
 ```json
 {"capture":{"microphoneEnabled":true}}
@@ -135,6 +160,7 @@ secretary brief
 secretary brief 2026-11-06 --json
 secretary dashboard --open
 secretary dashboard 2026-11-06 --output ~/Desktop/ps-brief.html
+secretary context                 # 粘贴给 agent 的 Markdown 上下文
 ```
 
 Dashboard 是 `~/.private-secretary/exports/` 下的自包含只读 HTML（0600）。
@@ -326,3 +352,15 @@ v3.1 迁移会把旧 `tasks` 转为 `todos`，删除 execution/procedural 表；
 - 无执行队列/L4 模型；
 - 屏幕差分在 64×36 缩略图上完成，OCR 节流；
 - ANE/CoreML 功耗需按目标模型实测。
+
+## 12. 验证命令
+
+```bash
+make test
+make smoke
+make e2e
+make app-test
+make install-test
+make agent-test
+make verify
+```

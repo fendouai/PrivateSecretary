@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PS_HOME="${PRIVATE_SECRETARY_HOME:-$HOME/.private-secretary}"
 INSTALL_DIR="$HOME/Library/Application Support/PrivateSecretary"
-APP="$INSTALL_DIR/PrivateSecretaryCapture.app"
+APP="$INSTALL_DIR/PrivateSecretary.app"
 LAUNCH_AGENTS="$HOME/Library/LaunchAgents"
 UID_NUM="$(id -u)"
 INTEGRATE_CODEX=1
@@ -26,30 +26,34 @@ cd "$ROOT"
 swift build -c release
 
 echo "== Installing binaries =="
-mkdir -p "$INSTALL_DIR/bin" "$PS_HOME/logs" "$PS_HOME/run" "$PS_HOME/cold" "$PS_HOME/tmp" "$LAUNCH_AGENTS"
+mkdir -p "$INSTALL_DIR/bin" "$PS_HOME/logs" "$PS_HOME/run" "$PS_HOME/cold" "$PS_HOME/tmp" "$PS_HOME/exports" "$LAUNCH_AGENTS"
 for binary in secretary secretary-mcp secretaryd; do
     install -m 0755 ".build/release/$binary" "$INSTALL_DIR/bin/$binary"
 done
 
-# Bundle the capture daemon so TCC has a stable application identity. The
-# LaunchAgent points inside this bundle, never at a bare unsigned path.
+# Bundle the menu bar app plus its daemon/MCP/CLI helpers. TCC sees one stable
+# application identity, and the menu bar app can start the embedded daemon.
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$INSTALL_DIR/bin/secretaryd" "$APP/Contents/MacOS/secretaryd"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Helpers" "$APP/Contents/Resources"
+cp ".build/release/PrivateSecretaryApp" "$APP/Contents/MacOS/PrivateSecretary"
+for helper in secretaryd secretary-mcp secretary; do
+    cp "$INSTALL_DIR/bin/$helper" "$APP/Contents/Helpers/$helper"
+done
+chmod +x "$APP/Contents/MacOS/PrivateSecretary" "$APP/Contents/Helpers/"*
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>en</string>
-    <key>CFBundleExecutable</key><string>secretaryd</string>
-    <key>CFBundleIdentifier</key><string>com.privatesecretary.capture</string>
+    <key>CFBundleExecutable</key><string>PrivateSecretary</string>
+    <key>CFBundleIdentifier</key><string>com.privatesecretary.app</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundleName</key><string>PrivateSecretaryCapture</string>
-    <key>CFBundleDisplayName</key><string>Private Secretary Capture</string>
+    <key>CFBundleName</key><string>PrivateSecretary</string>
+    <key>CFBundleDisplayName</key><string>Private Secretary</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>3.1.0</string>
-    <key>CFBundleVersion</key><string>310</string>
+    <key>CFBundleShortVersionString</key><string>3.2.0</string>
+    <key>CFBundleVersion</key><string>320</string>
     <key>LSUIElement</key><true/>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSMicrophoneUsageDescription</key>
@@ -60,41 +64,51 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 if command -v codesign >/dev/null 2>&1; then
-    codesign --force --sign - --timestamp=none "$APP" >/dev/null 2>&1 || \
+    codesign --force --deep --sign - --timestamp=none "$APP" >/dev/null 2>&1 || \
         echo "warning: ad-hoc codesign failed; TCC may need to be granted again after updates." >&2
 fi
 
 "$INSTALL_DIR/bin/secretary" --home "$PS_HOME" init >/dev/null
 
 echo "== Installing LaunchAgents =="
-python3 - "$ROOT/launchd/com.privatesecretary.daemon.plist.template" \
+render_template() {
+    python3 - "$1" "$2" "$3" "$4" <<'PY'
+import pathlib, sys
+template, destination, app_binary, home = sys.argv[1:]
+text = pathlib.Path(template).read_text()
+text = text.replace("@APP_BINARY@", app_binary)
+text = text.replace("@PS_HOME@", home)
+text = text.replace("@CONSOLIDATE_BINARY@", home + "/.placeholder")
+pathlib.Path(destination).write_text(text)
+PY
+}
+render_template "$ROOT/launchd/com.privatesecretary.daemon.plist.template" \
     "$LAUNCH_AGENTS/com.privatesecretary.daemon.plist" \
-    "$APP/Contents/MacOS/secretaryd" "$PS_HOME" "$INSTALL_DIR/bin/secretary" <<'PY'
-import html, pathlib, sys
-template, destination, app_binary, home, consolidate_binary = sys.argv[1:]
-text = pathlib.Path(template).read_text()
-text = text.replace("@APP_BINARY@", html.escape(app_binary))
-text = text.replace("@PS_HOME@", html.escape(home))
-pathlib.Path(destination).write_text(text)
-PY
-python3 - "$ROOT/launchd/com.privatesecretary.consolidate.plist.template" \
+    "$APP/Contents/Helpers/secretaryd" "$PS_HOME"
+render_template "$ROOT/launchd/com.privatesecretary.consolidate.plist.template" \
     "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" \
-    "$APP/Contents/MacOS/secretaryd" "$PS_HOME" "$INSTALL_DIR/bin/secretary" <<'PY'
-import html, pathlib, sys
-template, destination, app_binary, home, consolidate_binary = sys.argv[1:]
-text = pathlib.Path(template).read_text()
-text = text.replace("@CONSOLIDATE_BINARY@", html.escape(consolidate_binary))
-text = text.replace("@PS_HOME@", html.escape(home))
-pathlib.Path(destination).write_text(text)
+    "$APP/Contents/Helpers/secretaryd" "$PS_HOME"
+render_template "$ROOT/launchd/com.privatesecretary.menubar.plist.template" \
+    "$LAUNCH_AGENTS/com.privatesecretary.menubar.plist" \
+    "$APP/Contents/MacOS/PrivateSecretary" "$PS_HOME"
+# The consolidate agent uses the CLI, not the daemon; replace its placeholder.
+python3 - "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" "$INSTALL_DIR/bin/secretary" <<'PY'
+import pathlib, sys
+path, binary = sys.argv[1:]
+p = pathlib.Path(path)
+p.write_text(p.read_text().replace("@CONSOLIDATE_BINARY@", binary))
 PY
-plutil -lint "$LAUNCH_AGENTS/com.privatesecretary.daemon.plist" >/dev/null
-plutil -lint "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" >/dev/null
+for plist in daemon consolidate menubar; do
+    plutil -lint "$LAUNCH_AGENTS/com.privatesecretary.$plist.plist" >/dev/null
+done
 
 if [[ "${PRIVATE_SECRETARY_SKIP_LAUNCHCTL:-0}" != "1" ]]; then
+    launchctl bootout "gui/$UID_NUM/com.privatesecretary.menubar" >/dev/null 2>&1 || true
     launchctl bootout "gui/$UID_NUM/com.privatesecretary.daemon" >/dev/null 2>&1 || true
     launchctl bootout "gui/$UID_NUM/com.privatesecretary.consolidate" >/dev/null 2>&1 || true
     launchctl bootstrap "gui/$UID_NUM" "$LAUNCH_AGENTS/com.privatesecretary.daemon.plist"
     launchctl bootstrap "gui/$UID_NUM" "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" || true
+    launchctl bootstrap "gui/$UID_NUM" "$LAUNCH_AGENTS/com.privatesecretary.menubar.plist" || true
     launchctl kickstart -k "gui/$UID_NUM/com.privatesecretary.daemon" >/dev/null 2>&1 || true
 else
     echo "Skipping launchctl (PRIVATE_SECRETARY_SKIP_LAUNCHCTL=1)."
@@ -112,17 +126,17 @@ fi
 cat <<MSG
 
 Installed:
+  menu bar app  $APP
   binaries      $INSTALL_DIR/bin
-  capture app   $APP
   memory        $PS_HOME
-  LaunchAgents  ~/Library/LaunchAgents/com.privatesecretary.{daemon,consolidate}.plist
+  LaunchAgents  ~/Library/LaunchAgents/com.privatesecretary.{daemon,consolidate,menubar}.plist
 
 Live capture needs Screen Recording permission for:
   $APP
 
 Grant it once:
-  1. ./scripts/request-permissions.sh
-  2. Or add the app manually in System Settings → Privacy & Security → Screen Recording.
+  1. Open the menu bar app → Overview → Permissions → Grant.
+  2. Or run: ./scripts/request-permissions.sh
   3. Restart the daemon: launchctl kickstart -k gui/$UID_NUM/com.privatesecretary.daemon
 
 Check health:

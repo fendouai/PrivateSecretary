@@ -1,7 +1,7 @@
 # 本地 E2E 测试报告
 
 **日期**：2026-11-07  
-**版本**：PrivateSecretary 3.1.0  
+**版本**：PrivateSecretary 3.2.0
 **结论**：**本地软件栈 E2E 已全部通过**。硬件采集（TCC ScreenCaptureKit）和真实 Codex 模型闭环未在本机完成，原因见第 5 节。
 
 ## 1. 执行命令
@@ -79,7 +79,7 @@ make verify
 make test
 ```
 
-- **188 个 Swift Testing 测试**通过；
+- **189 个 Swift Testing 测试**通过；
 - 真实 Vision OCR；
 - 真实 whisper.cpp `ggml-base.bin` 转写；
 - MCP 进程测试；
@@ -88,6 +88,20 @@ make test
 - 2k / 10k soak。
 
 详细见 [测试报告](TEST-REPORT.md)。
+
+## 3.1 菜单栏 App 与多 Agent
+
+单独执行：
+
+```bash
+make app-test
+make install-test
+make agent-test
+```
+
+- `app-test`：SwiftUI 菜单栏 App 进程启动并保持运行；
+- `install-test`：安装 `PrivateSecretary.app`，校验内嵌 `secretaryd`/`secretary-mcp`/`secretary`、LSUIElement、3 个 LaunchAgent，并启动 bundled App；
+- `agent-test`：Claude Desktop / Cursor / generic 配置合并、0600、Codex 配置输出、独立 MCP initialize/tools/list。
 
 ## 4. 当前硬件状态
 

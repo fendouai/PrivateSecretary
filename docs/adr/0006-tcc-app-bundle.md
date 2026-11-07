@@ -9,11 +9,11 @@ ScreenCaptureKit 需要 Screen Recording TCC。裸可执行文件从 LaunchAgent
 
 ## 决策
 
-- `install.sh` 创建 `PrivateSecretaryCapture.app`；
-- Info.plist 使用 `com.privatesecretary.capture`；
-- LaunchAgent 指向 `.app/Contents/MacOS/secretaryd`；
+- `install.sh` 创建单个 `PrivateSecretary.app`：菜单栏 UI + `Contents/Helpers/secretaryd`/`secretary-mcp`/`secretary`；
+- Info.plist 使用 `com.privatesecretary.app`，`LSUIElement=true`；
+- daemon LaunchAgent 指向 `.app/Contents/Helpers/secretaryd`；
+- 菜单栏 App 的 Overview → Permissions 触发 Screen Recording/Microphone 请求；
 - 对 app 做 ad-hoc codesign；
-- `--request-permissions` 入口可让用户从 app 身份触发请求；
 - 文档明确重编译/重签后可能需要重新授权。
 
 ## 后果
@@ -32,4 +32,4 @@ ScreenCaptureKit 需要 Screen Recording TCC。裸可执行文件从 LaunchAgent
 
 ## 后续
 
-正式分发使用 Developer ID 签名 + notarization，或迁移为 SwiftUI menu bar app。
+正式分发使用 Developer ID 签名 + notarization；菜单栏 App 已落地，后续只需稳定签名与登录项分发。

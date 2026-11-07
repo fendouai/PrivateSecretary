@@ -32,12 +32,17 @@
 ┌────────────────────────┴───────────────────────────────────┐
 │ secretary-mcp (stdio)                                      │
 │  MCPRouter → MemoryService → SQLite (WAL, separate process) │
-└────────────────────────▲───────────────────────────────────┘
-                         │ JSON-RPC
-                  Codex + read-only Skill
+└───────────────▲────────────────────────────▲───────────────┘
+                │ JSON-RPC                   │
+   PrivateSecretary.app (SwiftUI)      Codex / Claude / Cursor
+   ├─ direct read of MemoryService      / generic MCP host
+   ├─ permission onboarding             └─ Agent Policy / Skill
+   ├─ local todo/read writes
+   └─ copy context / dashboard
 ```
 
 - Capture 与 Preprocessing 合并在 `secretaryd` 内，避免第二个 TCC 身份与音频帧 IPC。
+- `PrivateSecretary.app` 是 SwiftUI 菜单栏壳：直接通过 `MemoryService` 读 SQLite，管理 LaunchAgent/内嵌 daemon，展示权限、timeline、todos、contacts、messages；不持有采集线程。
 - MCP 独立进程，通过 WAL 并发只读；`generate_daily_digest`、todo/message 写操作使用短事务。
 - `MemoryStore` 用单连接 + `NSLock`，写事务 `BEGIN IMMEDIATE`；读取投影避免反序列化全量 transcript。
 - Capture screen/audio 各有串行队列；ASR、ingest 串行；intent gate 与向量缓存内部加锁。
@@ -79,7 +84,7 @@ L2 Episode INSERT
 - 按时间戳升序返回；最多 `limit` 条，取最近 limit 条后升序；
 - 每条只含摘要 ≤240 字符、来源 id、trust。
 
-Timeline 不经过相关性排序，不混入消息；消息是独立视图。`dailyBrief` 把 timeline、open todos、unread messages、contacts 组合成一个只读快照；`DashboardRenderer` 把它渲染为自包含、HTML 转义、CSP 限制的只读 HTML。
+Timeline 不经过相关性排序，不混入消息；消息是独立视图。`dailyBrief` 把 timeline、open todos、unread messages、contacts 组合成一个只读快照；`DashboardRenderer` 把它渲染为自包含、HTML 转义、CSP 限制的只读 HTML；`ContextExporter` 生成裁剪后的 Markdown，供菜单栏 App 或 CLI `secretary context` 复制给 agent。
 
 ### 3.3 巩固
 
@@ -207,7 +212,30 @@ MCP 的 19 个工具分为：
 - 治理：`list_review_items`、`review_fact`；
 - 状态：`get_status`。
 
-CLI 额外提供 `secretary dashboard`（静态 HTML）与 `secretary message import`。
+CLI 额外提供 `secretary dashboard`（静态 HTML）、`secretary context`（粘贴给 agent 的 Markdown）与 `secretary message import`。
+
+## 6.2 菜单栏 App
+
+`Sources/PrivateSecretaryApp`：
+
+- `MenuBarExtra` + `Window`；LSUIElement，无 Dock 图标；
+- Overview：状态、权限、服务启停、复制 Daily Brief、Dashboard；
+- Timeline：按天读取 `brief`，点击 `drill_down`；
+- Todos / Contacts / Messages：只读列表 + 本地状态写；
+- Settings：路径、版本、模型、麦克风开关；
+- `ContextExporter` 生成裁剪后的 Markdown 上下文；
+- 内嵌 `Contents/Helpers/secretaryd`、`secretary-mcp`、`secretary`，TCC 身份统一到 `com.privatesecretary.app`。
+
+## 6.3 多 Agent
+
+`scripts/install-agent.sh` 生成/合并：
+
+- Codex：`~/.codex` MCP + Skill；
+- Claude Desktop：`~/Library/Application Support/Claude/claude_desktop_config.json`；
+- Cursor：`~/.cursor/mcp.json`；
+- generic：任意 MCP JSON。
+
+所有 host 共用同一个 stdio MCP，配置写入 0600，保留无关 key。协议与边界见 [Agent 接入](AGENT-INTEGRATION.md)。
 
 ## 7. 安全边界
 

@@ -1,5 +1,25 @@
 # Changelog
 
+## v3.2.0 — 2026-11-07
+
+菜单栏 App + 多 Agent 接入 + 可复制上下文。
+
+### Added
+
+- SwiftUI menu bar App `PrivateSecretary.app`：Overview、Timeline、Todos、Contacts、Messages、Settings、权限 onboarding、服务启停、Dashboard、Copy as Context。
+- 单 app bundle 内嵌 `secretaryd` / `secretary-mcp` / `secretary`，TCC 身份统一为 `com.privatesecretary.app`。
+- `com.privatesecretary.menubar` LaunchAgent。
+- `ContextExporter` + `secretary context`：生成可粘贴给 agent 的 Markdown。
+- `scripts/install-agent.sh`：Codex / Claude Desktop / Cursor / generic MCP 配置。
+- `AGENT-INTEGRATION.md`、`AGENT-POLICY.md`、generic MCP 示例。
+- `make app-test`、`make agent-test`。
+
+### Changed
+
+- 安装脚本从 `PrivateSecretaryCapture.app` 迁移到统一的 `PrivateSecretary.app`。
+- MCP 工具仍为 19 个只读整理器；多 Agent 共用 stdio MCP。
+- 测试增至 189 个 Swift Testing 测试。
+
 ## v3.1.0 — 2026-11-06
 
 只读整理器。
@@ -26,7 +46,7 @@
 - `message import` / `import_messages`：JSON/JSONL 批量归档；`merge_contacts` 合并重复联系人；`list_messages(query:)` FTS 搜索。
 - 并发同 external_id 去重、导入错误报告、Unicode/随机输入鲁棒性测试。
 - Unix socket `message` / `contact` 写入协议。
-- 188 个 Swift Testing 测试与 organizer/robustness 测试套件。
+- 189 个 Swift Testing 测试与 organizer/robustness 测试套件。
 - 独立 `scripts/e2e-test.sh`：socket → SQLite → MCP 19 tools → CLI → dashboard → digest 全软件栈 E2E。
 
 ### Removed

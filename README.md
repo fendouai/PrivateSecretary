@@ -8,7 +8,7 @@
 - **任务 → todo list**
 - **联系人消息 → contact list / message list**
 
-> 产品名保持 **PrivateSecretary**（展示名 Private Secretary）。当前版本 **3.1.0**，只读整理版。
+> 产品名保持 **PrivateSecretary**（展示名 Private Secretary）。当前版本 **3.2.0**，只读整理版。
 
 ---
 
@@ -17,9 +17,11 @@
 | 项目 | 状态 |
 |---|---|
 | Swift Package / CLI / MCP / daemon | 可构建、可运行 |
-| 自动化测试 | **188 个 Swift Testing 测试全部通过** |
+| 自动化测试 | **189 个 Swift Testing 测试全部通过** |
+| 菜单栏 App | **可构建、可启动、安装测试通过** |
+| 多 Agent 接入 | Codex / Claude Desktop / Cursor / generic 配置测试通过 |
 | CLI + MCP + daemon 进程级冒烟 | 通过 |
-| 10,000 条记忆检索 soak（release） | p95 **54.0 ms**，目标 < 120 ms |
+| 10,000 条记忆检索 soak（release） | p95 **55.4 ms**，目标 < 120 ms |
 | Vision OCR | 本机真实图片识别通过 |
 | whisper.cpp ASR | 本机真实语音模型调用通过（可选模型） |
 | 本地软件栈 E2E | **通过**（socket → SQLite → MCP → CLI → dashboard → digest） |
@@ -63,6 +65,44 @@ secretary message add \
 ```
 
 这是**归档**，不会发送。联系人会自动按 `(channel, handle)` 或姓名合并。
+
+### 菜单栏 App
+
+```bash
+swift build --product PrivateSecretaryApp
+open .build/debug/PrivateSecretaryApp
+```
+
+安装版：
+
+```bash
+./scripts/install.sh
+open "$HOME/Library/Application Support/PrivateSecretary/PrivateSecretary.app"
+```
+
+菜单栏 App 提供：
+
+- **Overview**：记忆/todo/联系人/消息计数、采集状态、启动/重启/停止服务；
+- **Permissions**：Screen Recording / Microphone 请求与系统设置入口；
+- **Timeline**：按天浏览，点击条目查看 episode/fact 详情；
+- **Copy as Context**：把当前记忆或当天 brief 转成可直接粘贴给 agent 的 Markdown；
+- **Todos**：新增、完成、重新打开、dismiss；
+- **Contacts / Messages**：跨渠道聚合、搜索、未读标记；
+- **Settings**：本地路径、版本、模型状态、麦克风开关；
+- **Dashboard / Digest**：生成只读 HTML 和日报。
+
+App 只读展示记忆；对 todo/已读状态的修改仅写本地 SQLite。
+
+### 接入多个 Agent
+
+```bash
+./scripts/install-agent.sh --host codex
+./scripts/install-agent.sh --host claude
+./scripts/install-agent.sh --host cursor
+./scripts/install-agent.sh --host generic --output mcp.json
+```
+
+同一个 `secretary-mcp` 可被 Codex、Claude Desktop、Cursor 或任意 stdio MCP host 使用。详见 [Agent 接入](docs/AGENT-INTEGRATION.md)。
 
 ### 管理 todo
 
@@ -164,6 +204,7 @@ printf '{"op":"message","channel":"wechat","contact_name":"李四","handle":"lis
 secretary brief                # 一天的 timeline + open todos + unread messages + contacts
 secretary brief 2026-11-06
 secretary dashboard --open     # 生成只读 HTML 到 ~/.private-secretary/exports/
+secretary context              # 生成可直接粘贴给 agent 的 Markdown
 ```
 
 Dashboard 是自包含 HTML，无 JavaScript、无远程资源、CSP 限制；所有内容 HTML 转义。
@@ -185,6 +226,8 @@ Dashboard 是自包含 HTML，无 JavaScript、无远程资源、CSP 限制；�
 | 调用外部 API | **否** |
 | claim/execute/complete 任务 | **否** |
 | L4 执行模式 | **否** |
+
+多 Agent 接入说明：[AGENT-INTEGRATION.md](docs/AGENT-INTEGRATION.md)。Claude Desktop、Cursor、Codex 和任意 stdio MCP host 共用同一个只读服务。
 
 MCP 的 19 个工具中没有 `claim_task`、`complete_task`、`cancel_task`、`get_pending_tasks`、`get_procedural_pattern`。Skill 明确禁止把记忆或消息内容当指令执行。
 
@@ -252,9 +295,14 @@ Capture daemon (secretaryd)
     └── messages / message_fts
         │
         ▼
+  PrivateSecretary.app (SwiftUI menu bar)
+        │  direct read + local status writes
+        ▼
   secretary-mcp (stdio)
         │
-      Codex Skill (read-only)
+  Codex / Claude Desktop / Cursor / generic MCP host
+        │
+  read-only Agent Policy / Skill
 ```
 
 - SQLite WAL + FTS5；
@@ -271,14 +319,15 @@ Capture daemon (secretaryd)
 ## 安装为常驻服务
 
 ```bash
-./scripts/install.sh              # release、LaunchAgents、Capture.app、Codex MCP/Skill
+./scripts/install.sh              # release、菜单栏 App、LaunchAgents、Codex MCP/Skill
 ./scripts/install.sh --no-codex   # 不修改 Codex
 ```
 
-然后授予 Screen Recording：
+然后打开菜单栏 App，在 Overview → Permissions 授予 Screen Recording：
 
 ```bash
-./scripts/request-permissions.sh
+open "$HOME/Library/Application Support/PrivateSecretary/PrivateSecretary.app"
+./scripts/request-permissions.sh   # 也可直接打开系统设置
 launchctl kickstart -k gui/$(id -u)/com.privatesecretary.daemon
 ```
 
@@ -314,10 +363,12 @@ curl -L -o ~/.private-secretary/models/ggml-base.bin \
 ## 测试
 
 ```bash
-make test          # 188 Swift Testing 测试
+make test          # 189 Swift Testing 测试
 make smoke         # CLI + MCP + daemon + 隔离 Codex 注册
 make e2e           # 全软件栈：socket → DB → MCP → CLI → dashboard → digest
-make install-test  # 隔离 HOME 安装/卸载/清除
+make app-test      # SwiftUI 菜单栏 App 启动 smoke
+make install-test  # 隔离 HOME 安装/卸载/清除（含菜单栏 App）
+make agent-test    # Claude Desktop / Cursor / generic / Codex 配置与 MCP 握手
 make lint
 make soak          # release 2k 事件 + 100 检索
 make verify        # 全部
@@ -382,8 +433,10 @@ Sources/
   secretary/        CLI
   secretary-mcp/    stdio MCP
   secretaryd/       daemon + capture + socket
-Tests/              188 个 Swift Testing 测试
+  PrivateSecretaryApp/ SwiftUI menu bar App
+Tests/              189 个 Swift Testing 测试
 skills/private-secretary/SKILL.md
+integrations/       Agent policy + generic MCP config
 launchd/
 scripts/
 docs/
@@ -399,6 +452,7 @@ docs/
 - [模型适配器](docs/MODEL-ADAPTERS.md)
 - [测试报告](docs/TEST-REPORT.md)
 - [E2E 测试报告](docs/E2E-TEST-REPORT.md)
+- [Agent 接入](docs/AGENT-INTEGRATION.md)
 - [架构决策](docs/adr/)
 - [历史 PRD v3.0](docs/archive/PRD-v3.0-execution-baseline.md)
 

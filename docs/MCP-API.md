@@ -1,6 +1,6 @@
 # MCP API
 
-`secretary-mcp` 是本地 stdio MCP server，按换行分隔的 JSON-RPC 2.0 通信，不监听网络端口。
+`secretary-mcp` 是本地 stdio MCP server，按换行分隔的 JSON-RPC 2.0 通信，不监听网络端口。Codex、Claude Desktop、Cursor 或任意 MCP host 共用同一个 server；配置见 [Agent 接入](AGENT-INTEGRATION.md)。
 
 ```bash
 secretary-mcp [--home <dir>]
@@ -36,7 +36,7 @@ secretary-mcp [--home <dir>]
   "result": {
     "protocolVersion": "2025-06-18",
     "capabilities": {"tools": {"listChanged": false}},
-    "serverInfo": {"name": "private-secretary", "version": "3.1.0"},
+    "serverInfo": {"name": "private-secretary", "version": "3.2.0"},
     "instructions": "This server is a read-only organizer..."
   }
 }
@@ -440,7 +440,7 @@ secretary-mcp [--home <dir>]
     "messages": 5
   },
   "capture": {"state": "running", "permissionGranted": true},
-  "version": "3.1.0"
+  "version": "3.2.0"
 }
 ```
 

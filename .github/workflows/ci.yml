@@ -20,7 +20,11 @@ jobs:
         run: make test
       - name: Smoke
         run: make smoke
+      - name: App smoke
+        run: make app-test
       - name: Installer packaging
         run: make install-test
+      - name: Agent integrations
+        run: make agent-test
       - name: Soak
         run: make soak

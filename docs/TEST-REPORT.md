@@ -1,6 +1,6 @@
-# 测试报告 — PrivateSecretary v3.1
+# 测试报告 — PrivateSecretary v3.2
 
-**版本**：3.1.0（只读整理版，organizer 增强）
+**版本**：3.2.0（只读整理版 + 菜单栏 App + 多 Agent）
 **日期**：2026-11-06  
 **结论**：全部自动化测试、进程冒烟、隔离安装、lint 与 10k soak 通过。未自动化的部分是 TCC 授权后的真实 ScreenCaptureKit 实拍和第三方渠道适配器联调。
 
@@ -30,7 +30,7 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 ```
 
 ```text
-✔ Test run with 188 tests in 0 suites passed after 2.704 seconds.
+✔ Test run with 189 tests in 0 suites passed after 2.377 seconds.
 ```
 
 | 文件 | 测试数 | 覆盖 |
@@ -45,11 +45,11 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 | `PipelineTests.swift` | 14 | L2/L3/todo、重复、排除、系统音频、隐私 |
 | `RetrievalTests.swift` | 13 | 混合检索、层/时间过滤、折叠、drill-down、归档 |
 | `ConsolidationTests.swift` | 10 | 日报、显著性、todo 投影、遗忘、幂等、转义 |
-| `OrganizerExtendedTests.swift` | 8 | JSONL 导入、FTS 消息搜索、merge、brief、dashboard、并发去重 |
+| `OrganizerExtendedTests.swift` | 9 | JSONL 导入、FTS 消息搜索、merge、brief、dashboard、context、并发去重 |
 | `OrganizerTests.swift` | 6 | timeline、排序/范围、联系人/消息便捷 API、v2→v3 迁移 |
-| `ProcessIntegrationTests.swift` | 5 | MCP、CLI、daemon、TCC、brief/dashboard/import |
+| `ProcessIntegrationTests.swift` | 5 | MCP、CLI、daemon、TCC、brief/dashboard/import/context/merge |
 | `RobustnessTests.swift` | 5 | 400 条随机时间查询、超长输入、无效导入、Unicode |
-| **合计** | **188** | |
+| **合计** | **189** | |
 
 ### 已验证行为
 
@@ -71,6 +71,11 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 - `merge_contacts` 移动消息和 handle，删除 source；
 - `list_messages` 的 `query` 走 message_fts；
 - 并发 8 次同一 external_id 只插入一条消息。
+
+**菜单栏 App / 多 Agent**
+- `make install-test` 验证 `PrivateSecretary.app` 结构、helper、Info.plist、LSUIElement、三个 LaunchAgent、卸载/保留/清除；
+- App 二进制启动 smoke（本地进程保持运行 3 秒）；
+- `make agent-test` 验证 Claude Desktop、Cursor、generic 配置，保留无关 key、权限 0600、Codex 配置输出、独立客户端 MCP initialize/tools/list。
 
 **Timeline**
 
@@ -116,7 +121,8 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 - MCP 子进程 initialize → tools/list → tools/call；
 - CLI demo/recall/timeline/todos/contacts/messages/digest；
 - daemon socket status/ingest/message，SIGTERM 优雅退出；
-- 隔离 HOME 安装：二进制、Capture.app、plist 渲染、卸载保留记忆、--purge；
+- 隔离 HOME 安装：二进制、`PrivateSecretary.app`、内嵌 helpers、3 个 LaunchAgent、卸载保留记忆、--purge；
+- `make agent-test`：Claude Desktop / Cursor / generic 配置、0600、既有 key 保留、Codex print、独立 MCP 握手；
 - Codex `mcp add/list` 在隔离 CODEX_HOME 成功。
 
 ---
@@ -156,7 +162,7 @@ SMOKE TEST PASSED
 INSTALL TEST PASSED
 ```
 
-覆盖：3 个二进制、`PrivateSecretaryCapture.app`、Info.plist bundle id、LaunchAgent 渲染无占位符、plutil、记忆初始化、卸载保留数据、--purge。
+覆盖：3 个二进制、`PrivateSecretary.app`（菜单栏 executable + 内嵌 daemon/MCP/CLI）、Info.plist bundle id `com.privatesecretary.app`、3 个 LaunchAgent 渲染无占位符、plutil、记忆初始化、卸载保留数据、--purge。
 
 未触碰真实用户 LaunchAgents 或全局 Codex 配置。
 
@@ -167,18 +173,18 @@ Release，真实 pipeline + 100 次混合检索：
 ### 2,000 事件
 
 ```text
-accepted=2000/2000 ingest=176/s p50=8.7ms p95=11.8ms max=12.3ms db=3952KiB
+accepted=2000/2000 ingest=196/s p50=8.5ms p95=10.9ms max=12.1ms db=3960KiB
 SOAK PASSED
 ```
 
 ### 10,000 事件（目标规模）
 
 ```text
-accepted=10000/10000 ingest=74/s p50=42.2ms p95=54.0ms max=55.2ms db=19124KiB
+accepted=10000/10000 ingest=78/s p50=44.5ms p95=55.4ms max=58.4ms db=19116KiB
 SOAK PASSED (p95 target 120ms)
 ```
 
-结论：10k 检索 p95 54.0 ms，低于 120 ms 目标；DB 约 19 MB。Ingest 74/s 足以处理稀疏桌面感知；并发 release build 时略有下降，不影响目标。
+结论：10k 检索 p95 55.4 ms，低于 120 ms 目标；DB 约 19 MB。Ingest 78/s 足以处理稀疏桌面感知；并发 release build 时略有下降，不影响目标。
 
 ## 6. 安全验收
 
@@ -261,7 +267,9 @@ SOAK PASSED (p95 target 120ms)
 PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin ./scripts/test.sh
 ./scripts/smoke-test.sh
 ./scripts/e2e-test.sh
+./scripts/app-smoke-test.sh
 ./scripts/install-test.sh
+./scripts/agent-integration-test.sh
 EVENTS=10000 QUERIES=100 DAYS=7 ./scripts/soak-test.sh
 ./scripts/verify.sh
 ```

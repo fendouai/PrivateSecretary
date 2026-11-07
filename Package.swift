@@ -36,7 +36,8 @@ let package = Package(
         .library(name: "SecretaryKit", targets: ["SecretaryKit"]),
         .executable(name: "secretary", targets: ["secretary"]),
         .executable(name: "secretary-mcp", targets: ["secretary-mcp"]),
-        .executable(name: "secretaryd", targets: ["secretaryd"])
+        .executable(name: "secretaryd", targets: ["secretaryd"]),
+        .executable(name: "PrivateSecretaryApp", targets: ["PrivateSecretaryApp"])
     ],
     targets: [
         .target(
@@ -46,6 +47,7 @@ let package = Package(
         .executableTarget(name: "secretary", dependencies: ["SecretaryKit"]),
         .executableTarget(name: "secretary-mcp", dependencies: ["SecretaryKit"]),
         .executableTarget(name: "secretaryd", dependencies: ["SecretaryKit"]),
+        .executableTarget(name: "PrivateSecretaryApp", dependencies: ["SecretaryKit"]),
         .testTarget(
             name: "SecretaryKitTests",
             dependencies: ["SecretaryKit"],

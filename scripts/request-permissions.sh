@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APP="$HOME/Library/Application Support/PrivateSecretary/PrivateSecretaryCapture.app"
+APP="$HOME/Library/Application Support/PrivateSecretary/PrivateSecretary.app"
 if [[ ! -d "$APP" ]]; then
-    echo "Capture app not installed. Run scripts/install.sh first." >&2
+    echo "Private Secretary app not installed. Run scripts/install.sh first." >&2
     exit 1
 fi
-echo "Opening the capture app to request Screen Recording permission…"
-open -a "$APP" --args --request-permissions || true
+echo "Opening Private Secretary to request Screen Recording permission…"
+open -a "$APP" || true
 sleep 1
 open "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture" || true
 cat <<MSG
-If Private Secretary Capture is listed, enable it. If not, use the + button and
-select:
-  $APP
-
-Then restart the daemon:
+In the app: Overview → Permissions → Grant.
+Then restart capture:
   launchctl kickstart -k gui/$(id -u)/com.privatesecretary.daemon
+
+If the app is not listed in Screen Recording, use + and select:
+  $APP
 MSG

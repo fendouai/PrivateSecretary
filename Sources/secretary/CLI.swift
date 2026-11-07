@@ -77,6 +77,7 @@ final class CLIRunner {
       digest [yyyy-MM-dd] [--json]
       consolidate [yyyy-MM-dd] [--yesterday] [--json]
       brief [yyyy-MM-dd] [--json]  Timeline + open todos + unread messages + contacts
+      context [yyyy-MM-dd]          Paste-ready Markdown context for an agent
       dashboard [yyyy-MM-dd] [--output path] [--open] [--json]
       timeline [yyyy-MM-dd] [--days N] [--no-facts] [--limit N] [--json]
       todos [--status open|done|dismissed|all] [--limit N] [--json]
@@ -158,6 +159,7 @@ final class CLIRunner {
         case "digest": try runDigest(service, rest)
         case "consolidate": try runConsolidate(service, rest)
         case "brief": try runBrief(service, rest)
+        case "context": try runContext(service, rest)
         case "dashboard": try runDashboard(service, rest)
         case "timeline": try runTimeline(service, rest)
         case "todos": try runTodos(service, rest)
@@ -430,6 +432,18 @@ final class CLIRunner {
             for contact in brief.contacts.prefix(20) {
                 print("- \(contact.displayName) · \(contact.messageCount) messages")
             }
+        }
+    }
+
+    private func runContext(_ service: MemoryService, _ tokens: [String]) throws {
+        let args = try CLIArguments(tokens: tokens, valueOptions: ["date"], flagOptions: [])
+        guard args.positionals.count <= 1 else { throw CLIError.message("context takes at most one date") }
+        let key = args.options["date"] ?? args.positionals.first
+        let brief = try service.brief(dayKey: key)
+        if jsonOutput {
+            print(try Self.jsonString(brief))
+        } else {
+            print(ContextExporter.markdown(brief), terminator: "")
         }
     }
 

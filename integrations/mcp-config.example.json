@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "private-secretary": {
+      "command": "/Users/you/Library/Application Support/PrivateSecretary/bin/secretary-mcp",
+      "args": ["--home", "/Users/you/.private-secretary"]
+    }
+  }
+}

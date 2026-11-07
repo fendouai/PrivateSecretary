@@ -168,3 +168,26 @@ private func importer(for env: TestEnvironment) -> MessageImporter {
     #expect(try env.store.counts().contacts == 1)
     #expect(try env.store.counts().messages == 1)
 }
+
+@Test func contextExporterProducesPasteReadyMarkdown() throws {
+    let env = try TestEnvironment()
+    let now = Date()
+    _ = try env.ingest("帮我记一下 HNSW 参数对比", at: now)
+    _ = try env.store.recordMessage(
+        channel: "email",
+        contactName: "张三",
+        handle: "zs@example.com",
+        direction: .inbound,
+        text: "请周五前发我 <b>参数对比</b>"
+    )
+    let brief = try env.service.brief(dayKey: DateCoding.dayKey(now), now: now)
+    let markdown = ContextExporter.markdown(brief)
+    #expect(markdown.contains("# Private Secretary context"))
+    #expect(markdown.contains("## Timeline"))
+    #expect(markdown.contains("## Open todos"))
+    #expect(markdown.contains("## Unread messages"))
+    #expect(markdown.contains("## Contacts"))
+    #expect(markdown.contains("- [ ]"))
+    #expect(markdown.contains("<b>参数对比</b>"))
+    #expect(!markdown.contains("<script>"))
+}

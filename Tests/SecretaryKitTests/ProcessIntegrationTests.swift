@@ -293,6 +293,11 @@ private func runAndCapture(_ executable: String, _ arguments: [String]) throws -
     ).stdout)
     #expect((afterMerge["count"] as? Int) == 1)
 
+    let context = try runAndCapture(executable, ["--home", home.path, "context"])
+    #expect(context.status == 0)
+    #expect(context.stdout.contains("# Private Secretary context"))
+    #expect(context.stdout.contains("## Open todos"))
+
     let brief = try runAndCapture(executable, ["--home", home.path, "brief", "--json"])
     #expect(brief.status == 0)
     let briefObject = jsonObject(brief.stdout)
