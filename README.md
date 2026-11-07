@@ -8,7 +8,7 @@
 - **任务 → todo list**
 - **联系人消息 → contact list / message list**
 
-> 产品名保持 **PrivateSecretary**（展示名 Private Secretary）。当前版本 **3.2.0**，只读整理版。
+> 产品名保持 **PrivateSecretary**（展示名 Private Secretary）。当前版本 **3.2.1**，只读整理版。
 
 ---
 
@@ -25,7 +25,8 @@
 | Vision OCR | 本机真实图片识别通过 |
 | whisper.cpp ASR | 本机真实语音模型调用通过（可选模型） |
 | 本地软件栈 E2E | **通过**（socket → SQLite → MCP → CLI → dashboard → digest） |
-| ScreenCaptureKit | 编译通过；TCC 授权后的真实采集未完成（当前未授权） |
+| 真实采集 E2E | **通过**：2 条真实 OCR/ASR episode、1 fact、1 todo、联系人消息、UI/MCP 全链路 |
+| ScreenCaptureKit | **真实屏幕 OCR + 系统音频 ASR 已验证**（见真实采集报告）；App 自身 TCC 仍需授权 |
 | LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过；真实登录会话未测试 |
 | Codex 模型驱动闭环 | 未完成（本机账户模型不支持 + usage limit） |
 
@@ -92,6 +93,8 @@ open "$HOME/Library/Application Support/PrivateSecretary/PrivateSecretary.app"
 - **Dashboard / Digest**：生成只读 HTML 和日报。
 
 App 只读展示记忆；对 todo/已读状态的修改仅写本地 SQLite。
+
+![Private Secretary 真实采集数据](docs/assets/real-capture-overview.png)
 
 ### 接入多个 Agent
 
@@ -470,6 +473,7 @@ docs/
 - [模型适配器](docs/MODEL-ADAPTERS.md)
 - [测试报告](docs/TEST-REPORT.md)
 - [E2E 测试报告](docs/E2E-TEST-REPORT.md)
+- [真实采集 E2E 报告](docs/REAL-DATA-E2E-REPORT.md)
 - [Agent 接入](docs/AGENT-INTEGRATION.md)
 - [macOS 授权指引](docs/PERMISSIONS.md)
 - [架构决策](docs/adr/)

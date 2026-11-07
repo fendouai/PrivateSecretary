@@ -1,6 +1,6 @@
-# 测试报告 — PrivateSecretary v3.2
+# 测试报告 — PrivateSecretary v3.2.1
 
-**版本**：3.2.0（只读整理版 + 菜单栏 App + 多 Agent）
+**版本**：3.2.1（只读整理版 + 菜单栏 App + 多 Agent）
 **日期**：2026-11-06  
 **结论**：全部自动化测试、进程冒烟、隔离安装、lint 与 10k soak 通过。未自动化的部分是 TCC 授权后的真实 ScreenCaptureKit 实拍和第三方渠道适配器联调。
 
@@ -30,7 +30,7 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 ```
 
 ```text
-✔ Test run with 189 tests in 0 suites passed after 2.377 seconds.
+✔ Test run with 189 tests in 0 suites passed after 2.692 seconds.
 ```
 
 | 文件 | 测试数 | 覆盖 |
@@ -173,7 +173,7 @@ Release，真实 pipeline + 100 次混合检索：
 ### 2,000 事件
 
 ```text
-accepted=2000/2000 ingest=196/s p50=8.5ms p95=10.9ms max=12.1ms db=3960KiB
+accepted=2000/2000 ingest=208/s p50=7.2ms p95=10.0ms max=10.4ms db=3964KiB
 SOAK PASSED
 ```
 
@@ -248,6 +248,10 @@ SOAK PASSED (p95 target 120ms)
 6. SQLite 明文，依赖 FileVault 和权限。
 7. 无单条消息删除工具（可 purge）。
 8. Swift Testing 的 CLT 路径适配属于环境 workaround。
+
+## 9.1 真实采集
+
+真实屏幕 OCR、系统音频 ASR、App UI（Peekaboo）、MCP 真实数据测试见 [真实采集 E2E 报告](REAL-DATA-E2E-REPORT.md)。本轮真实数据为 2 episodes、1 fact、1 todo、1 contact、2 messages、1 digest。
 
 ## 10. E2E
 

@@ -218,7 +218,7 @@ CLI 额外提供 `secretary dashboard`（静态 HTML）、`secretary context`（
 
 `Sources/PrivateSecretaryApp`：
 
-- `MenuBarExtra` + `Window`；LSUIElement，无 Dock 图标；
+- `NSStatusItem` + AppKit `NSWindow` 承载 SwiftUI views；LSUIElement；在刘海屏上若 status item 被 notch 遮挡，自动切到 regular app + Dock 窗口 fallback；
 - Overview：状态、权限、服务启停、复制 Daily Brief、Dashboard；
 - Timeline：按天读取 `brief`，点击 `drill_down`；
 - Todos / Contacts / Messages：只读列表 + 本地状态写；

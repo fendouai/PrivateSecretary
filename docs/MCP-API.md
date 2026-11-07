@@ -36,7 +36,7 @@ secretary-mcp [--home <dir>]
   "result": {
     "protocolVersion": "2025-06-18",
     "capabilities": {"tools": {"listChanged": false}},
-    "serverInfo": {"name": "private-secretary", "version": "3.2.0"},
+    "serverInfo": {"name": "private-secretary", "version": "3.2.1"},
     "instructions": "This server is a read-only organizer..."
   }
 }
@@ -440,7 +440,7 @@ secretary-mcp [--home <dir>]
     "messages": 5
   },
   "capture": {"state": "running", "permissionGranted": true},
-  "version": "3.2.0"
+  "version": "3.2.1"
 }
 ```
 

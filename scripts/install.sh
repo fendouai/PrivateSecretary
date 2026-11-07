@@ -52,8 +52,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleName</key><string>PrivateSecretary</string>
     <key>CFBundleDisplayName</key><string>Private Secretary</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>3.2.0</string>
-    <key>CFBundleVersion</key><string>320</string>
+    <key>CFBundleShortVersionString</key><string>3.2.1</string>
+    <key>CFBundleVersion</key><string>321</string>
     <key>LSUIElement</key><true/>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSMicrophoneUsageDescription</key>
@@ -72,13 +72,13 @@ fi
 
 echo "== Installing LaunchAgents =="
 render_template() {
-    python3 - "$1" "$2" "$3" "$4" <<'PY'
+    python3 - "$1" "$2" "$3" "$4" "${5:-}" <<'PY'
 import pathlib, sys
-template, destination, app_binary, home = sys.argv[1:]
+template, destination, app_binary, home, consolidate_binary = sys.argv[1:]
 text = pathlib.Path(template).read_text()
 text = text.replace("@APP_BINARY@", app_binary)
 text = text.replace("@PS_HOME@", home)
-text = text.replace("@CONSOLIDATE_BINARY@", home + "/.placeholder")
+text = text.replace("@CONSOLIDATE_BINARY@", consolidate_binary)
 pathlib.Path(destination).write_text(text)
 PY
 }
@@ -87,17 +87,10 @@ render_template "$ROOT/launchd/com.privatesecretary.daemon.plist.template" \
     "$APP/Contents/Helpers/secretaryd" "$PS_HOME"
 render_template "$ROOT/launchd/com.privatesecretary.consolidate.plist.template" \
     "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" \
-    "$APP/Contents/Helpers/secretaryd" "$PS_HOME"
+    "$APP/Contents/Helpers/secretaryd" "$PS_HOME" "$INSTALL_DIR/bin/secretary"
 render_template "$ROOT/launchd/com.privatesecretary.menubar.plist.template" \
     "$LAUNCH_AGENTS/com.privatesecretary.menubar.plist" \
     "$APP/Contents/MacOS/PrivateSecretary" "$PS_HOME"
-# The consolidate agent uses the CLI, not the daemon; replace its placeholder.
-python3 - "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" "$INSTALL_DIR/bin/secretary" <<'PY'
-import pathlib, sys
-path, binary = sys.argv[1:]
-p = pathlib.Path(path)
-p.write_text(p.read_text().replace("@CONSOLIDATE_BINARY@", binary))
-PY
 for plist in daemon consolidate menubar; do
     plutil -lint "$LAUNCH_AGENTS/com.privatesecretary.$plist.plist" >/dev/null
 done

@@ -1,8 +1,8 @@
 # 本地 E2E 测试报告
 
 **日期**：2026-11-07  
-**版本**：PrivateSecretary 3.2.0
-**结论**：**本地软件栈 E2E 已全部通过**。硬件采集（TCC ScreenCaptureKit）和真实 Codex 模型闭环未在本机完成，原因见第 5 节。
+**版本**：PrivateSecretary 3.2.1
+**结论**：**本地软件栈 E2E 与真实采集 E2E 均已通过**。真实采集细节见 [真实采集报告](REAL-DATA-E2E-REPORT.md)。麦克风、App 自身 TCC 自动采集、长期运行和真实 Codex 模型闭环仍未完成，原因见第 4–6 节。
 
 ## 1. 执行命令
 
@@ -103,23 +103,25 @@ make agent-test
 - `install-test`：安装 `PrivateSecretary.app`，校验内嵌 `secretaryd`/`secretary-mcp`/`secretary`、LSUIElement、3 个 LaunchAgent，并启动 bundled App；
 - `agent-test`：Claude Desktop / Cursor / generic 配置合并、0600、Codex 配置输出、独立 MCP initialize/tools/list。
 
-## 4. 当前硬件状态
+## 4. 真实采集状态
 
-`secretary doctor` 在本机输出：
+2026-11-07 已完成真实采集：
 
 ```text
-screen_recording_tcc: Not granted
-asr: whisperModel is empty (default home)
-capture_daemon: not running (outside E2E)
+Screen Recording: Granted（Terminal 启动的 daemon）
+真实系统音频 ASR: 通过（whisper.cpp）
+真实屏幕 OCR: 通过（Vision）
+2 episodes, 1 fact, 1 todo, 1 contact, 2 messages
 ```
 
-因此：
+详细证据、截图与 Peekaboo UI 操作见 [真实采集 E2E 报告](REAL-DATA-E2E-REPORT.md)。
 
-- **没有**进行真实屏幕变化帧 + 系统音频的 live capture E2E；
-- **没有**验证 TCC 授权后 ANE/GPU 的长期功耗；
-- **没有**验证真实 LaunchAgent 登录会话（安装脚本在隔离 HOME 中做了打包/加载前置验证，但未对真实用户 GUI 会话 bootstrap）。
+仍未完成：
 
-TCC 是操作系统人工授权，自动化测试不能代替用户点击授权；授权后可按 [运维手册](OPERATIONS.md) 运行 `secretaryd --capture system` 验证。
+- **PrivateSecretary.app 自身的 Screen Recording TCC**：App 内显示 `Permission required`；LaunchAgent helper 启动采集会返回 `Screen Recording permission denied`，需要用户在系统设置中给 App 授权；
+- 真实麦克风采集/ASR；
+- ANE/GPU 长期功耗；
+- 真实 LaunchAgent 登录会话（安装脚本在隔离 HOME 中验证了打包/启动，真实用户 GUI bootstrap 未完成）。
 
 ## 5. Codex 模型闭环
 
@@ -138,10 +140,11 @@ TCC 是操作系统人工授权，自动化测试不能代替用户点击授权�
 
 | 项目 | 状态 | 原因 |
 |---|---|---|
-| 真实 ScreenCaptureKit 帧/系统音频 | 未完成 | Screen Recording TCC 未授权 |
+| 真实 ScreenCaptureKit / 系统音频 | **通过**（Terminal daemon；OCR/ASR/真实数据报告） |
+| App 自身 TCC 自动采集 | 未完成 | App 的 Screen Recording 未授权；LaunchAgent helper 被 TCC 拒绝 |
 | 麦克风采集 | 未完成 | 默认关闭、未授权 |
-| 真实 LaunchAgent 登录启动 | 未完成 | 不修改真实用户会话 |
-| 第三方渠道 API（Email/Lark/WeChat） | 未完成 | 无账号/不引入外部写权限；通过 CLI/socket/MCP 模拟 |
+| 真实 LaunchAgent 登录启动 | 部分通过 | 打包/启动验证；真实用户 GUI 会话 bootstrap 未完成 |
+| 第三方渠道 API（Email/Lark/WeChat） | 未完成 | 无账号/不引入外部写权限；通过本地 adapter 导入测试文本 |
 | Codex 模型驱动 MCP 工具 | 阻塞 | 账户模型不支持 + usage limit |
 | 多显示器 | 未实现 | 只采集主显示器 |
 | 24h 稳定性 | 未完成 | 需要授权后长跑 |
@@ -153,6 +156,7 @@ TCC 是操作系统人工授权，自动化测试不能代替用户点击授权�
 make test
 make smoke
 make install-test
+# 真实采集见 docs/REAL-DATA-E2E-REPORT.md
 EVENTS=10000 QUERIES=100 DAYS=7 ./scripts/soak-test.sh
 make verify
 ```

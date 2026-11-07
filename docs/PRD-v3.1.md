@@ -1,7 +1,7 @@
 # 私人秘书 PrivateSecretary 产品与技术方案 v3.1
 
 **文档版本**：v3.1（只读整理版）  
-**实现版本**：3.2.0
+**实现版本**：3.2.1
 **适用主机**：Apple Silicon Mac（M2/M3/M4，16 GB 内存基准）  
 **目标 Agent 宿主**：Codex（Skill + MCP）  
 **核心变化**：移除任务执行与 L4 程序性记忆；记忆呈现为 timeline，任务呈现为 todo list，多渠道消息聚合为 contact list / message list。
@@ -345,7 +345,7 @@ SQLite WAL + FTS5，单文件 `~/.private-secretary/secretary.sqlite`，schema v
 - 删除 `execution_logs` 与 `procedural_patterns`；
 - `SecretaryTask`、`TaskRisk`、`ExecutionLog`、`ProceduralPattern` 从代码移除；
 - MCP 执行工具移除；
-- 品牌保持 PrivateSecretary；产品版本 v3.2.0。
+- 品牌保持 PrivateSecretary；产品版本 v3.2.1。
 
 ### 5.4 结论
 

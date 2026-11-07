@@ -1044,7 +1044,7 @@ public struct ServiceStatus: Codable, Equatable, Sendable {
 }
 
 public enum PrivateSecretaryVersion {
-    public static let current = "3.2.0"
+    public static let current = "3.2.1"
 }
 
 // MARK: - Daily brief and imports

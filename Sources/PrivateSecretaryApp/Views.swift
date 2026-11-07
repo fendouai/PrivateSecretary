@@ -24,39 +24,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     }
 }
 
-struct MenuContent: View {
-    @ObservedObject var model: AppModel
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some View {
-        Group {
-            Text("Private Secretary")
-            Text(menuSummary)
-            Divider()
-            Button("Open Private Secretary") {
-                openWindow(id: "main")
-                NSApp.activate(ignoringOtherApps: true)
-            }
-            Button("Open Dashboard") { model.openDashboard() }
-            Button("Open Data Folder") { model.openDataFolder() }
-            Divider()
-            if model.isServiceRunning {
-                Button("Restart Capture Service") { model.restartService() }
-            } else {
-                Button("Start Capture Service") { model.startService() }
-                    .disabled(model.serviceBusy)
-            }
-            Divider()
-            Button("Quit Private Secretary") { NSApp.terminate(nil) }
-        }
-    }
-
-    private var menuSummary: String {
-        guard let counts = model.status?.counts else { return "Loading…" }
-        return "\(counts.episodes) episodes · \(counts.openTodos) open todos · \(counts.messages) messages"
-    }
-}
-
 struct RootView: View {
     @ObservedObject var model: AppModel
     @State private var selection: SidebarItem? = .overview
