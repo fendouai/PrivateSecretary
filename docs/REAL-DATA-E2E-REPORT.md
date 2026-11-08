@@ -239,6 +239,22 @@ list_messages: lark read, email read
    `Screen Recording permission denied (terminal TCC state)`。
    App 自身的 Screen Recording 还没有在系统设置中授权。需要在 GUI 中给 `PrivateSecretary.app` 授权后重启服务；这不是代码可以自动绕过的。
 
+## 5.1 为什么“授权后重新打开又没了”
+
+本轮排查确认有三个叠加原因：
+
+1. **App 是 ad-hoc 签名**：`codesign` 显示 `Signature=adhoc`、`TeamIdentifier=not set`，没有稳定签名身份。每次 `install.sh`、重新 build、重新 copy 或 `codesign --deep` 都会改变 CDHash（`e53ced…` 只是当前一次构建的值）。
+2. **TCC 的 Screen Recording 授权绑定代码身份**：旧 CDHash 的授权仍在系统设置列表里显示为“PrivateSecretary”，但当前 App 的 CDHash 已变化，`CGPreflightScreenCaptureAccess()` 仍返回 false。表现为“开关是开的，但 App 仍要授权”。
+3. **系统设置修改需要管理员认证**：macOS 26 在修改屏幕录制列表时弹出“隐私与安全性正在尝试修改你的系统设置 / 使用触控 ID 或输入密码允许此操作”。如果取消认证，变更不会真正提交。自动化不能代替这一步。
+
+所以正确的一次性修复是：
+
+- 在系统设置中删除旧的 `PrivateSecretary` 行，重新 `+` 添加当前 `PrivateSecretary.app`，完成 Touch ID/密码认证；
+- 授权后不要再 rebuild/reinstall/重新签名；
+- 长期方案是 Developer ID 签名 + notarization，保持同一 Team ID、bundle id、安装路径和 designated requirement。
+
+当前真实 OCR/ASR 采集是由 **Terminal 启动的 daemon** 完成的；Terminal 的 Screen Recording 已授权。App 自身 TCC 仍未完成，所以 LaunchAgent 自动采集被拒绝。
+
 ## 6. 未完成/未验证
 
 - **PrivateSecretary.app 自身的 TCC 授权**：当前 App 显示 `Permission required`；真实采集是通过 Terminal 启动的 daemon 完成的。
