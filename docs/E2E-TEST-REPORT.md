@@ -79,7 +79,7 @@ make verify
 make test
 ```
 
-- **189 个 Swift Testing 测试**通过；
+- **193 个 Swift Testing 测试**通过；
 - 真实 Vision OCR；
 - 真实 whisper.cpp `ggml-base.bin` 转写；
 - MCP 进程测试；

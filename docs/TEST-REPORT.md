@@ -30,7 +30,7 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 ```
 
 ```text
-✔ Test run with 193 tests in 0 suites passed after 9.610 seconds.
+✔ Test run with 193 tests in 0 suites passed after 11.106 seconds.
 ```
 
 | 文件 | 测试数 | 覆盖 |
@@ -174,7 +174,7 @@ Release，真实 pipeline + 100 次混合检索：
 ### 2,000 事件
 
 ```text
-accepted=2000/2000 ingest=208/s p50=7.2ms p95=10.0ms max=10.4ms db=3964KiB
+accepted=2000/2000 ingest=103/s p50=17.1ms p95=24.9ms max=29.8ms db=3956KiB
 SOAK PASSED
 ```
 

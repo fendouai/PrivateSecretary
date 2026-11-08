@@ -17,7 +17,7 @@ echo "== Claude Desktop config =="
 mkdir -p "$TMP/Library/Application Support/Claude"
 printf '{"theme":"dark","mcpServers":{"other":{"command":"other"}}}\n' > "$TMP/Library/Application Support/Claude/claude_desktop_config.json"
 ./scripts/install-agent.sh --host claude >/dev/null
-python3 - "$TMP/Library/Application Support/Claude/claude_desktop_config.json" "$PRIVATE_SECRETARY_MCP" <<'PY'
+/usr/bin/python3 - "$TMP/Library/Application Support/Claude/claude_desktop_config.json" "$PRIVATE_SECRETARY_MCP" <<'PY'
 import json, os, sys
 path, command = sys.argv[1:]
 data = json.load(open(path))
@@ -31,7 +31,7 @@ PY
 
 echo "== Cursor config =="
 ./scripts/install-agent.sh --host cursor >/dev/null
-python3 - "$TMP/.cursor/mcp.json" "$PRIVATE_SECRETARY_MCP" <<'PY'
+/usr/bin/python3 - "$TMP/.cursor/mcp.json" "$PRIVATE_SECRETARY_MCP" <<'PY'
 import json, os, sys
 path, command = sys.argv[1:]
 data = json.load(open(path))
@@ -41,7 +41,7 @@ PY
 
 echo "== Generic config =="
 ./scripts/install-agent.sh --host generic --output "$TMP/generic.json" >/dev/null
-python3 - "$TMP/generic.json" <<'PY'
+/usr/bin/python3 - "$TMP/generic.json" <<'PY'
 import json, sys
 data = json.load(open(sys.argv[1]))
 assert "private-secretary" in data["mcpServers"]
@@ -53,7 +53,7 @@ OUTPUT="$(./scripts/install-agent.sh --host codex --print)"
 [[ "$OUTPUT" == *"private-secretary"* ]]
 
 echo "== MCP standard initialize from an independent client =="
-python3 -u - "$PRIVATE_SECRETARY_MCP" "$PRIVATE_SECRETARY_HOME" <<'PY'
+/usr/bin/python3 -u - "$PRIVATE_SECRETARY_MCP" "$PRIVATE_SECRETARY_HOME" <<'PY'
 import json, select, subprocess, sys
 proc = subprocess.Popen([sys.argv[1], "--home", sys.argv[2]], stdin=subprocess.PIPE,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)

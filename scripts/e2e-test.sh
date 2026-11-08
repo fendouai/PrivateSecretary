@@ -29,7 +29,7 @@ for _ in $(seq 1 100); do [[ -S "$SOCKET" ]] && break; sleep 0.05; done
 [[ -S "$SOCKET" ]] || { cat "$ROOT/daemon.err"; exit 1; }
 
 echo "== socket ingest + messages =="
-python3 - "$SOCKET" <<'PY'
+/usr/bin/python3 - "$SOCKET" <<'PY'
 import json, socket, sys
 path = sys.argv[1]
 def call(req):
@@ -63,7 +63,7 @@ DAEMON_PID=""
 [[ -f "$ROOT/run/capture-status.json" ]] || { echo "missing capture status"; exit 1; }
 
 echo "== MCP full organizer journey =="
-python3 -u - "$BIN/secretary-mcp" "$ROOT" <<'PY'
+/usr/bin/python3 -u - "$BIN/secretary-mcp" "$ROOT" <<'PY'
 import json, select, subprocess, sys
 proc = subprocess.Popen(
     [sys.argv[1], "--home", sys.argv[2]],
@@ -144,7 +144,7 @@ test -s "$ROOT/dashboard.html"
 grep -q "Timeline" "$ROOT/dashboard.html"
 grep -q "Open todos" "$ROOT/dashboard.html"
 "$BIN/secretary" --home "$ROOT" status --json >"$ROOT/status.json"
-python3 - "$ROOT/status.json" <<'PY'
+/usr/bin/python3 - "$ROOT/status.json" <<'PY'
 import json, sys
 status = json.load(open(sys.argv[1]))
 counts = status["counts"]

@@ -49,7 +49,7 @@ else
 fi
 
 json_config() {
-    python3 - "$MCP_BIN" "$PS_HOME" <<'PY'
+    /usr/bin/python3 - "$MCP_BIN" "$PS_HOME" <<'PY'
 import json, sys
 print(json.dumps({"mcpServers": {"private-secretary": {
     "command": sys.argv[1],
@@ -63,7 +63,7 @@ write_merged_config() {
     local parent
     parent="$(dirname "$path")"
     mkdir -p "$parent"
-    python3 - "$path" "$MCP_BIN" "$PS_HOME" <<'PY'
+    /usr/bin/python3 - "$path" "$MCP_BIN" "$PS_HOME" <<'PY'
 import json, pathlib, sys
 path = pathlib.Path(sys.argv[1])
 command, home = sys.argv[2], sys.argv[3]

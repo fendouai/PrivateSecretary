@@ -15,4 +15,8 @@ if [[ -d "${CLT_TESTING}" ]]; then
     fi
 fi
 
-exec swift test "$@"
+# Child MCP/CLI processes may close their stdin while a test is still
+# writing. Keep a closed pipe from terminating the whole test runner.
+trap '' PIPE
+# Serial execution avoids pipe races between the MCP/CLI process fixtures.
+exec swift test --no-parallel "$@"

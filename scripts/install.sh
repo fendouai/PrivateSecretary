@@ -72,7 +72,7 @@ fi
 
 echo "== Installing LaunchAgents =="
 render_template() {
-    python3 - "$1" "$2" "$3" "$4" "${5:-}" <<'PY'
+    /usr/bin/python3 - "$1" "$2" "$3" "$4" "${5:-}" <<'PY'
 import pathlib, sys
 template, destination, app_binary, home, consolidate_binary = sys.argv[1:]
 text = pathlib.Path(template).read_text()

@@ -124,7 +124,10 @@ import ImageIO
     let script = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .appendingPathComponent("Fixtures/fake-model.py").path
-    guard let python = SystemDiagnostics.locateExecutable("python3") else { return }
+    let python = FileManager.default.isExecutableFile(atPath: "/usr/bin/python3")
+        ? "/usr/bin/python3"
+        : SystemDiagnostics.locateExecutable("python3")
+    guard let python else { return }
     var config = CommandModelConfig()
     config.enabled = true
     config.executable = python
@@ -141,7 +144,10 @@ import ImageIO
     let script = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .appendingPathComponent("Fixtures/fake-model.py").path
-    guard let python = SystemDiagnostics.locateExecutable("python3") else { return }
+    let python = FileManager.default.isExecutableFile(atPath: "/usr/bin/python3")
+        ? "/usr/bin/python3"
+        : SystemDiagnostics.locateExecutable("python3")
+    guard let python else { return }
     var config = CommandModelConfig()
     config.enabled = true
     config.executable = python

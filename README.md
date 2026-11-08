@@ -29,6 +29,7 @@
 | 真实采集 E2E | **通过**：7 条真实 OCR/ASR episode、3 facts、1 todo、联系人消息、review、UI/MCP 全链路；App 内嵌 helper 正在运行 |
 | ScreenCaptureKit | **真实屏幕 OCR + 系统音频 ASR 已验证**（见真实采集报告）；App 自身 TCC 已授权 |
 | LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过；真实登录会话未测试 |
+| 本地 LLM | Ollama + Qwen2.5 1.5B 已接入 intent/fact 适配器 |
 | Codex 模型驱动闭环 | 未完成（本机账户模型不支持 + usage limit） |
 
 v3.1 移除了 v3.0 的任务执行、claim/complete、执行日志与 L4 程序性记忆。历史方案见 [归档 PRD](docs/archive/PRD-v3.0-execution-baseline.md)，当前方案见 [PRD v3.1](docs/PRD-v3.1.md)。
@@ -475,6 +476,8 @@ docs/
 - [测试报告](docs/TEST-REPORT.md)
 - [E2E 测试报告](docs/E2E-TEST-REPORT.md)
 - [真实采集 E2E 报告](docs/REAL-DATA-E2E-REPORT.md)
+- [项目蓝图：全天候多模态跨平台纯本地上下文管理器](docs/PROJECT-BLUEPRINT.md)
+- [本地 LLM 接入](docs/LOCAL-LLM.md)
 - [Agent 接入](docs/AGENT-INTEGRATION.md)
 - [macOS 授权指引](docs/PERMISSIONS.md)
 - [架构决策](docs/adr/)

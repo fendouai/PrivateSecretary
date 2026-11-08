@@ -13,11 +13,11 @@ for plist in launchd/*.template; do
 done
 
 echo "== Python fixtures =="
-python3 -m py_compile Tests/SecretaryKitTests/Fixtures/fake-model.py
+/usr/bin/python3 -m py_compile Tests/SecretaryKitTests/Fixtures/fake-model.py
 rm -rf Tests/SecretaryKitTests/Fixtures/__pycache__
 
 echo "== read-only organizer invariants =="
-python3 - <<'PY'
+/usr/bin/python3 - <<'PY'
 from pathlib import Path
 skill = Path("skills/private-secretary/SKILL.md").read_text()
 for token in ["get_timeline", "list_todos", "list_contacts", "list_messages", "never execute", "read-only"]:

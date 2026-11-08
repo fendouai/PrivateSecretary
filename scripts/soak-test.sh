@@ -10,7 +10,7 @@ echo "== release build =="
 swift build -c release --product secretary >/dev/null
 echo "== soak: $EVENTS events / $QUERIES queries =="
 OUTPUT="$(.build/release/secretary soak --events "$EVENTS" --queries "$QUERIES" --days "$DAYS" --json)"
-python3 - "$OUTPUT" "$P95_TARGET" <<'PY'
+/usr/bin/python3 - "$OUTPUT" "$P95_TARGET" <<'PY'
 import json, sys
 data = json.loads(sys.argv[1])
 target = float(sys.argv[2])

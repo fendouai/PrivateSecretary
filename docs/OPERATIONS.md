@@ -375,3 +375,14 @@ make install-test
 make agent-test
 make verify
 ```
+
+## 本地 LLM
+
+可选，纯本地：
+
+```bash
+/opt/homebrew/bin/ollama serve
+ollama pull qwen2.5:1.5b-instruct-q4_K_M
+```
+
+在 config 的 `intentGate.model` / `factGate.model` 中启用 `scripts/llm-bridge.py`。详见 [本地 LLM 接入](LOCAL-LLM.md)。

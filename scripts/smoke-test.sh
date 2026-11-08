@@ -27,14 +27,14 @@ RECALL_OUT="$("$BIN/secretary" --home "$TMP" recall "HNSW 参数")"
 grep -q "L2" <<<"$RECALL_OUT"
 grep -q "Summaries only" <<<"$RECALL_OUT"
 TODOS_JSON="$("$BIN/secretary" --home "$TMP" todos --status all --json)"
-python3 - "$TODOS_JSON" <<'PY'
+/usr/bin/python3 - "$TODOS_JSON" <<'PY'
 import json, sys
 todos = json.loads(sys.argv[1])
 assert todos["count"] == 3, todos
 assert all("requires_confirmation" not in t for t in todos["todos"])
 assert all(t["status"] == "open" for t in todos["todos"])
 PY
-TODO_ID="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["todos"][0]["id"])' "$TODOS_JSON")"
+TODO_ID="$(/usr/bin/python3 -c 'import json,sys; print(json.loads(sys.argv[1])["todos"][0]["id"])' "$TODOS_JSON")"
 "$BIN/secretary" --home "$TMP" todo update "$TODO_ID" --status done >/dev/null
 "$BIN/secretary" --home "$TMP" timeline >/dev/null
 "$BIN/secretary" --home "$TMP" brief >/dev/null
@@ -46,7 +46,7 @@ grep -q "Timeline" "$TMP/dashboard.html"
 "$BIN/secretary" --home "$TMP" doctor --json >/dev/null
 
 echo "== MCP stdio =="
-PRIVATE_SECRETARY_HOME="$TMP" python3 -u - "$BIN/secretary-mcp" <<'PY'
+PRIVATE_SECRETARY_HOME="$TMP" /usr/bin/python3 -u - "$BIN/secretary-mcp" <<'PY'
 import json, os, select, subprocess, sys
 proc = subprocess.Popen(
     [sys.argv[1], "--home", os.environ["PRIVATE_SECRETARY_HOME"]],
@@ -100,7 +100,7 @@ echo "== daemon socket =="
 DAEMON_PID=$!
 for _ in $(seq 1 100); do [[ -S "$SOCKET" ]] && break; sleep 0.05; done
 [[ -S "$SOCKET" ]] || { echo "daemon socket missing"; cat "$TMP/daemon.err"; exit 1; }
-python3 - "$SOCKET" <<'PY'
+/usr/bin/python3 - "$SOCKET" <<'PY'
 import json, socket, sys
 path = sys.argv[1]
 def call(req):
