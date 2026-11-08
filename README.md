@@ -488,6 +488,7 @@ docs/
 - [本地 LLM 接入](docs/LOCAL-LLM.md)
 - [登录自启与 24/7 采集](docs/LOGIN-AUTOSTART.md)
 - [实时活动指标](docs/LIVE-METRICS.md)
+- [正式发布清单](docs/RELEASE-CHECKLIST.md)
 - [Agent 接入](docs/AGENT-INTEGRATION.md)
 - [macOS 授权指引](docs/PERMISSIONS.md)
 - [架构决策](docs/adr/)
