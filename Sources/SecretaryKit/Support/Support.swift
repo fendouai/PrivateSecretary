@@ -12,7 +12,19 @@ public enum JSONCoding {
 
     public static func decoder() -> JSONDecoder {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        // Foundation's .iso8601 strategy is inconsistent across toolchains
+        // when the timestamp contains fractional seconds. Accept both forms.
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let raw = try container.decode(String.self)
+            guard let date = DateCoding.parseISO(raw) else {
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "Invalid ISO-8601 date: \(raw)"
+                )
+            }
+            return date
+        }
         return decoder
     }
 

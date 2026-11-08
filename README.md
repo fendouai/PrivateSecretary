@@ -23,7 +23,7 @@
 | 项目 | 状态 |
 |---|---|
 | Swift Package / CLI / MCP / daemon | 可构建、可运行 |
-| 自动化测试 | **193 个 Swift Testing 测试全部通过** |
+| 自动化测试 | **194 个 Swift Testing 测试全部通过** |
 | 菜单栏 App | **可构建、可启动、安装测试通过** |
 | 多 Agent 接入 | Codex / Claude Desktop / Cursor / generic 配置测试通过 |
 | CLI + MCP + daemon 进程级冒烟 | 通过 |
@@ -375,7 +375,7 @@ curl -L -o ~/.private-secretary/models/ggml-base.bin \
 ## 测试
 
 ```bash
-make test          # 193 Swift Testing 测试
+make test          # 194 Swift Testing 测试
 make smoke         # CLI + MCP + daemon + 隔离 Codex 注册
 make e2e           # 全软件栈：socket → DB → MCP → CLI → dashboard → digest
 make app-test      # SwiftUI 菜单栏 App 启动 smoke
@@ -464,7 +464,7 @@ Sources/
   secretary-mcp/    stdio MCP
   secretaryd/       daemon + capture + socket
   PrivateSecretaryApp/ SwiftUI menu bar App
-Tests/              193 个 Swift Testing 测试
+Tests/              194 个 Swift Testing 测试
 skills/private-secretary/SKILL.md
 integrations/       Agent policy + generic MCP config
 launchd/

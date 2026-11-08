@@ -15,7 +15,7 @@
 - 修复 LaunchAgent consolidate 模板占位符导致的 CLI 路径错误。
 - 菜单栏改为 `NSStatusItem` + AppKit 窗口；刘海屏遮挡时自动切 Dock/窗口 fallback。
 - 增加真实采集 E2E 报告和截图。
-- 测试增至 193 个 Swift Testing 测试。
+- 测试增至 194 个 Swift Testing 测试。
 
 ## v3.2.0 — 2026-11-07
 

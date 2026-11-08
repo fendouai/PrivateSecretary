@@ -196,3 +196,12 @@ import ImageIO
     let exportPermissions = (exportAttributes[.posixPermissions] as? NSNumber)?.intValue ?? 0
     #expect(exportPermissions & 0o077 == 0)
 }
+
+@Test func jsonDecoderAcceptsFractionalAndPlainISO8601() throws {
+    struct Payload: Codable { var at: Date }
+    let fractional = #"{"at":"2026-11-08T03:57:22.123Z"}"#
+    let plain = #"{"at":"2026-11-08T03:57:22Z"}"#
+    let first = try JSONCoding.decoder().decode(Payload.self, from: Data(fractional.utf8))
+    let second = try JSONCoding.decoder().decode(Payload.self, from: Data(plain.utf8))
+    #expect(abs(first.at.timeIntervalSince1970 - second.at.timeIntervalSince1970) < 1)
+}

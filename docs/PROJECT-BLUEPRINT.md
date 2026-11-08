@@ -281,7 +281,7 @@ BM25 词法
 - Timeline / Todos / Contacts / Messages；
 - 菜单栏 App / CLI / MCP / Dashboard；
 - 真实屏幕 OCR、系统音频 ASR、Gmail inbox OCR 行提取；
-- 193 个 Swift Testing 测试。
+- 194 个 Swift Testing 测试。
 
 仍待完成：
 
@@ -436,7 +436,7 @@ BM25 词法
 
 ### 8.3 验收基线
 
-- 193 Swift Testing 测试；
+- 194 Swift Testing 测试；
 - 真实 OCR/系统音频采集；
 - Gmail inbox OCR → message；
 - 软件栈 E2E、App smoke、安装测试、多 Agent 配置；

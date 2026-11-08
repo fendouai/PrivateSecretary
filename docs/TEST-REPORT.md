@@ -30,7 +30,7 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 ```
 
 ```text
-✔ Test run with 193 tests in 0 suites passed after 11.106 seconds.
+✔ Test run with 194 tests in 0 suites passed after 7.711 seconds.
 ```
 
 | 文件 | 测试数 | 覆盖 |
@@ -41,7 +41,7 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 | `StorageTests.swift` | 17 | schema、FTS、todo 状态、contact/message、cold、purge |
 | `IntentGateTests.swift` | 16 | todo 捕获、系统音频不生成、去重、节流、模型回退 |
 | `FactGateTests.swift` | 15 | 去重、矛盾、取代、review、注入、同 episode 去重 |
-| `InfrastructureTests.swift` | 14 | socket、锁、配置、候选默认值、模型命令、权限 |
+| `InfrastructureTests.swift` | 15 | socket、锁、配置、候选默认值、模型命令、权限 |
 | `PipelineTests.swift` | 14 | L2/L3/todo、重复、排除、系统音频、隐私 |
 | `RetrievalTests.swift` | 13 | 混合检索、层/时间过滤、折叠、drill-down、归档 |
 | `ConsolidationTests.swift` | 10 | 日报、显著性、todo 投影、遗忘、幂等、转义 |
@@ -50,7 +50,7 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 | `EmailScreenTests.swift` | 4 | Gmail inbox OCR、去重、非 Gmail 页、episode 重处理 |
 | `ProcessIntegrationTests.swift` | 5 | MCP、CLI、daemon、TCC、brief/dashboard/import/context/merge |
 | `RobustnessTests.swift` | 5 | 400 条随机时间查询、超长输入、无效导入、Unicode |
-| **合计** | **193** | |
+| **合计** | **194** | |
 
 ### 已验证行为
 
