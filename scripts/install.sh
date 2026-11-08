@@ -82,27 +82,33 @@ text = text.replace("@CONSOLIDATE_BINARY@", consolidate_binary)
 pathlib.Path(destination).write_text(text)
 PY
 }
-render_template "$ROOT/launchd/com.privatesecretary.daemon.plist.template" \
-    "$LAUNCH_AGENTS/com.privatesecretary.daemon.plist" \
-    "$APP/Contents/Helpers/secretaryd" "$PS_HOME"
+# Capture is app-managed so the embedded helper inherits the app's TCC
+# Screen Recording grant. Do not install a standalone daemon LaunchAgent.
+rm -f "$LAUNCH_AGENTS/com.privatesecretary.daemon.plist"
 render_template "$ROOT/launchd/com.privatesecretary.consolidate.plist.template" \
     "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" \
     "$APP/Contents/Helpers/secretaryd" "$PS_HOME" "$INSTALL_DIR/bin/secretary"
 render_template "$ROOT/launchd/com.privatesecretary.menubar.plist.template" \
     "$LAUNCH_AGENTS/com.privatesecretary.menubar.plist" \
     "$APP/Contents/MacOS/PrivateSecretary" "$PS_HOME"
-for plist in daemon consolidate menubar; do
+for plist in consolidate menubar; do
     plutil -lint "$LAUNCH_AGENTS/com.privatesecretary.$plist.plist" >/dev/null
 done
 
 if [[ "${PRIVATE_SECRETARY_SKIP_LAUNCHCTL:-0}" != "1" ]]; then
-    launchctl bootout "gui/$UID_NUM/com.privatesecretary.menubar" >/dev/null 2>&1 || true
-    launchctl bootout "gui/$UID_NUM/com.privatesecretary.daemon" >/dev/null 2>&1 || true
-    launchctl bootout "gui/$UID_NUM/com.privatesecretary.consolidate" >/dev/null 2>&1 || true
-    launchctl bootstrap "gui/$UID_NUM" "$LAUNCH_AGENTS/com.privatesecretary.daemon.plist"
-    launchctl bootstrap "gui/$UID_NUM" "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" || true
-    launchctl bootstrap "gui/$UID_NUM" "$LAUNCH_AGENTS/com.privatesecretary.menubar.plist" || true
-    launchctl kickstart -k "gui/$UID_NUM/com.privatesecretary.daemon" >/dev/null 2>&1 || true
+    for agent in menubar daemon consolidate; do
+        launchctl bootout "gui/$UID_NUM/com.privatesecretary.$agent" >/dev/null 2>&1 || true
+    done
+    sleep 1
+    for agent in consolidate menubar; do
+        for attempt in 1 2 3; do
+            if launchctl bootstrap "gui/$UID_NUM" "$LAUNCH_AGENTS/com.privatesecretary.$agent.plist"; then
+                break
+            fi
+            sleep 1
+        done
+    done
+    launchctl kickstart -k "gui/$UID_NUM/com.privatesecretary.menubar" >/dev/null 2>&1 || true
 else
     echo "Skipping launchctl (PRIVATE_SECRETARY_SKIP_LAUNCHCTL=1)."
 fi
@@ -122,7 +128,7 @@ Installed:
   menu bar app  $APP
   binaries      $INSTALL_DIR/bin
   memory        $PS_HOME
-  LaunchAgents  ~/Library/LaunchAgents/com.privatesecretary.{daemon,consolidate,menubar}.plist
+  LaunchAgents  ~/Library/LaunchAgents/com.privatesecretary.{menubar,consolidate}.plist
 
 Live capture needs Screen Recording permission for:
   $APP
@@ -130,7 +136,7 @@ Live capture needs Screen Recording permission for:
 Grant it once:
   1. Open the menu bar app → Overview → Permissions → Grant.
   2. Or run: ./scripts/request-permissions.sh
-  3. Restart the daemon: launchctl kickstart -k gui/$UID_NUM/com.privatesecretary.daemon
+  3. Restart the app or capture service from the app menu.
 
 Check health:
   $INSTALL_DIR/bin/secretary --home "$PS_HOME" doctor

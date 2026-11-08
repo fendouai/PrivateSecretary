@@ -30,6 +30,11 @@ public final class SystemCaptureEngine: NSObject, SCStreamOutput, SCStreamDelega
     private var microphoneActive = false
     private var lastFrameAt: Date?
     private var lastAudioSegmentAt: Date?
+    private var screenshotsProcessed = 0
+    private var ocrFramesProcessed = 0
+    private var audioSecondsProcessed = 0.0
+    private var audioSegmentsProcessed = 0
+    private var sessionStartedAt: Date?
     private var lastHealthWrite = Date.distantPast
     private var lastOCRText = ""
     private var lastOCRAt = Date.distantPast
@@ -127,6 +132,11 @@ public final class SystemCaptureEngine: NSObject, SCStreamOutput, SCStreamDelega
         withStateLock {
             self.stream = stream
             self.running = true
+            self.screenshotsProcessed = 0
+            self.ocrFramesProcessed = 0
+            self.audioSecondsProcessed = 0
+            self.audioSegmentsProcessed = 0
+            self.sessionStartedAt = Date()
         }
         publishHealth(state: "running", detail: microphoneActive ? "system + microphone audio, screen deltas" : "system audio + screen deltas")
     }
@@ -189,7 +199,10 @@ public final class SystemCaptureEngine: NSObject, SCStreamOutput, SCStreamDelega
             regions: delta.regions,
             signature: delta.signature
         ))
-        withStateLock { lastFrameAt = timestamp }
+        withStateLock {
+            screenshotsProcessed += 1
+            lastFrameAt = timestamp
+        }
 
         guard delta.changed, !delta.regions.isEmpty || delta.isFirstFrame else { return }
         // Do not OCR while the system is in secure keyboard input (password
@@ -217,6 +230,7 @@ public final class SystemCaptureEngine: NSObject, SCStreamOutput, SCStreamDelega
             guard normalized.count >= config.capture.ocrMinimumNewCharacters else { return }
             guard normalized != lastOCRText else { return }
             lastOCRText = normalized
+            withStateLock { ocrFramesProcessed += 1 }
             let candidate = CandidatePacket(
                 capturedAt: timestamp,
                 source: .screen,
@@ -253,13 +267,17 @@ public final class SystemCaptureEngine: NSObject, SCStreamOutput, SCStreamDelega
         guard !samples.isEmpty else { return }
         let duration = Double(samples.count) / 16_000
         let timestamp = Date()
+        withStateLock { audioSecondsProcessed += duration }
         audioRing.append(samples)
         let segments = segmenter.append(
             samples: samples,
             capturedAt: timestamp.addingTimeInterval(-duration)
         )
         for segment in segments {
-            withStateLock { lastAudioSegmentAt = Date() }
+            withStateLock {
+                lastAudioSegmentAt = Date()
+                audioSegmentsProcessed += 1
+            }
             processAudioSegment(segment)
         }
         maybePublishHealth()
@@ -360,7 +378,12 @@ public final class SystemCaptureEngine: NSObject, SCStreamOutput, SCStreamDelega
                 detail: detail,
                 permissionGranted: state == "running",
                 lastFrameAt: lastFrameAt,
-                lastAudioSegmentAt: lastAudioSegmentAt
+                lastAudioSegmentAt: lastAudioSegmentAt,
+                screenshotsProcessed: screenshotsProcessed,
+                ocrFramesProcessed: ocrFramesProcessed,
+                audioSecondsProcessed: audioSecondsProcessed,
+                audioSegmentsProcessed: audioSegmentsProcessed,
+                sessionStartedAt: sessionStartedAt
             )
         }
         onHealth(health)

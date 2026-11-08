@@ -205,3 +205,34 @@ import ImageIO
     let second = try JSONCoding.decoder().decode(Payload.self, from: Data(plain.utf8))
     #expect(abs(first.at.timeIntervalSince1970 - second.at.timeIntervalSince1970) < 1)
 }
+
+@Test func captureMetricsAndLLMUsageRoundTrip() throws {
+    let env = try TestEnvironment()
+    let started = Date(timeIntervalSince1970: 1_760_100_000)
+    let health = CaptureHealth(
+        state: "running",
+        detail: "system audio + screen deltas",
+        permissionGranted: true,
+        lastFrameAt: started.addingTimeInterval(12),
+        lastAudioSegmentAt: started.addingTimeInterval(10),
+        screenshotsProcessed: 120,
+        ocrFramesProcessed: 31,
+        audioSecondsProcessed: 42.5,
+        audioSegmentsProcessed: 7,
+        sessionStartedAt: started
+    )
+    env.service.publishCaptureHealth(health)
+    let read = try #require(CaptureStatusStore(paths: env.paths).read())
+    #expect(read.screenshotsProcessed == 120)
+    #expect(read.ocrFramesProcessed == 31)
+    #expect(abs((read.audioSecondsProcessed ?? 0) - 42.5) < 0.001)
+    #expect(read.audioSegmentsProcessed == 7)
+
+    let usage = LLMUsage(promptTokens: 1_200, completionTokens: 340, calls: 4, updatedAt: started)
+    try JSONCoding.encoder(pretty: true).encode(usage).write(to: LLMUsageStore.url(paths: env.paths), options: .atomic)
+    let decoded = try #require(LLMUsageStore.read(paths: env.paths))
+    #expect(decoded.promptTokens == 1_200)
+    #expect(decoded.completionTokens == 340)
+    #expect(decoded.calls == 4)
+    #expect(decoded.totalTokens == 1_540)
+}

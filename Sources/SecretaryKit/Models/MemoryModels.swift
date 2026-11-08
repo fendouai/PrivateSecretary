@@ -999,19 +999,68 @@ public struct CaptureHealth: Codable, Equatable, Sendable {
     public var permissionGranted: Bool
     public var lastFrameAt: Date?
     public var lastAudioSegmentAt: Date?
+    public var screenshotsProcessed: Int?
+    public var ocrFramesProcessed: Int?
+    public var audioSecondsProcessed: Double?
+    public var audioSegmentsProcessed: Int?
+    public var sessionStartedAt: Date?
 
     public init(
         state: String,
         detail: String? = nil,
         permissionGranted: Bool = false,
         lastFrameAt: Date? = nil,
-        lastAudioSegmentAt: Date? = nil
+        lastAudioSegmentAt: Date? = nil,
+        screenshotsProcessed: Int? = nil,
+        ocrFramesProcessed: Int? = nil,
+        audioSecondsProcessed: Double? = nil,
+        audioSegmentsProcessed: Int? = nil,
+        sessionStartedAt: Date? = nil
     ) {
         self.state = state
         self.detail = detail
         self.permissionGranted = permissionGranted
         self.lastFrameAt = lastFrameAt
         self.lastAudioSegmentAt = lastAudioSegmentAt
+        self.screenshotsProcessed = screenshotsProcessed
+        self.ocrFramesProcessed = ocrFramesProcessed
+        self.audioSecondsProcessed = audioSecondsProcessed
+        self.audioSegmentsProcessed = audioSegmentsProcessed
+        self.sessionStartedAt = sessionStartedAt
+    }
+}
+
+public struct LLMUsage: Codable, Equatable, Sendable {
+    public var promptTokens: Int
+    public var completionTokens: Int
+    public var calls: Int
+    public var updatedAt: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case promptTokens = "prompt_tokens"
+        case completionTokens = "completion_tokens"
+        case calls
+        case updatedAt = "updated_at"
+    }
+
+    public init(promptTokens: Int = 0, completionTokens: Int = 0, calls: Int = 0, updatedAt: Date? = nil) {
+        self.promptTokens = promptTokens
+        self.completionTokens = completionTokens
+        self.calls = calls
+        self.updatedAt = updatedAt
+    }
+
+    public var totalTokens: Int { promptTokens + completionTokens }
+}
+
+public enum LLMUsageStore {
+    public static func url(paths: AppPaths) -> URL {
+        paths.runDirectory.appendingPathComponent("llm-usage.json")
+    }
+
+    public static func read(paths: AppPaths) -> LLMUsage? {
+        guard let data = try? Data(contentsOf: url(paths: paths)) else { return nil }
+        return try? JSONCoding.decoder().decode(LLMUsage.self, from: data)
     }
 }
 
@@ -1021,6 +1070,7 @@ public struct ServiceStatus: Codable, Equatable, Sendable {
     public var capture: CaptureHealth
     public var intentModel: String
     public var extractionModel: String
+    public var llmUsage: LLMUsage?
     public var version: String
     public var generatedAt: Date
 
@@ -1030,6 +1080,7 @@ public struct ServiceStatus: Codable, Equatable, Sendable {
         capture: CaptureHealth,
         intentModel: String,
         extractionModel: String,
+        llmUsage: LLMUsage? = nil,
         version: String = PrivateSecretaryVersion.current,
         generatedAt: Date = Date()
     ) {
@@ -1038,6 +1089,7 @@ public struct ServiceStatus: Codable, Equatable, Sendable {
         self.capture = capture
         self.intentModel = intentModel
         self.extractionModel = extractionModel
+        self.llmUsage = llmUsage
         self.version = version
         self.generatedAt = generatedAt
     }

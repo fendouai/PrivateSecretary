@@ -349,6 +349,7 @@ public final class MemoryService {
             capture: health,
             intentModel: config.intentGate.model.enabled ? config.intentGate.model.executable : "rules",
             extractionModel: config.factGate.model.enabled ? config.factGate.model.executable : "rules",
+            llmUsage: LLMUsageStore.read(paths: paths),
             generatedAt: now
         )
     }

@@ -4,6 +4,8 @@
 Reads the JSON task envelope produced by ModelCommandClient on stdin and calls
 the local Ollama server on 127.0.0.1. It never contacts a remote service.
 """
+import datetime
+import fcntl
 import json
 import os
 import sys
@@ -13,6 +15,38 @@ import urllib.request
 MODEL = os.environ.get("PRIVATE_SECRETARY_LLM_MODEL", "qwen2.5:1.5b-instruct-q4_K_M")
 URL = os.environ.get("PRIVATE_SECRETARY_OLLAMA_URL", "http://127.0.0.1:11434/api/chat")
 TIMEOUT = int(os.environ.get("PRIVATE_SECRETARY_LLM_TIMEOUT", "120"))
+USAGE_PATH = os.environ.get("PRIVATE_SECRETARY_LLM_USAGE", "")
+
+
+def record_usage(payload: dict) -> None:
+    if not USAGE_PATH:
+        return
+    prompt = int(payload.get("prompt_eval_count") or 0)
+    completion = int(payload.get("eval_count") or 0)
+    if prompt <= 0 and completion <= 0:
+        return
+    directory = os.path.dirname(USAGE_PATH)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    lock_path = USAGE_PATH + ".lock"
+    with open(lock_path, "a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        current = {"prompt_tokens": 0, "completion_tokens": 0, "calls": 0}
+        try:
+            with open(USAGE_PATH) as handle:
+                current.update(json.load(handle))
+        except (FileNotFoundError, ValueError):
+            pass
+        current["prompt_tokens"] = int(current.get("prompt_tokens", 0)) + prompt
+        current["completion_tokens"] = int(current.get("completion_tokens", 0)) + completion
+        current["calls"] = int(current.get("calls", 0)) + 1
+        current["updated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+        temp = USAGE_PATH + "." + str(os.getpid()) + ".tmp"
+        with open(temp, "w") as handle:
+            json.dump(current, handle, ensure_ascii=False)
+        os.chmod(temp, 0o600)
+        os.replace(temp, USAGE_PATH)
+        fcntl.flock(lock, fcntl.LOCK_UN)
 
 
 def chat(system: str, user: str) -> dict:
@@ -29,6 +63,7 @@ def chat(system: str, user: str) -> dict:
     request = urllib.request.Request(URL, data=body, headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
         payload = json.loads(response.read().decode("utf-8"))
+    record_usage(payload)
     content = payload.get("message", {}).get("content", "")
     if isinstance(content, dict):
         return content
@@ -122,6 +157,12 @@ def extract_facts(payload: dict) -> dict:
 
 
 def main() -> int:
+    global USAGE_PATH
+    arguments = sys.argv[1:]
+    if "--usage" in arguments:
+        index = arguments.index("--usage")
+        if index + 1 < len(arguments):
+            USAGE_PATH = arguments[index + 1]
     try:
         payload = json.load(sys.stdin)
         task = payload.get("task")

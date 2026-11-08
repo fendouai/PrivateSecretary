@@ -25,12 +25,11 @@ test -d "$INSTALL_DIR/PrivateSecretary.app"
 test -x "$INSTALL_DIR/PrivateSecretary.app/Contents/MacOS/PrivateSecretary"
 test -x "$INSTALL_DIR/PrivateSecretary.app/Contents/Helpers/secretaryd"
 test -x "$INSTALL_DIR/PrivateSecretary.app/Contents/Helpers/secretary-mcp"
-test -f "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist"
+test ! -f "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist"
 test -f "$HOME/Library/LaunchAgents/com.privatesecretary.consolidate.plist"
 test -f "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist"
 test -f "$PRIVATE_SECRETARY_HOME/config.json"
 test -f "$PRIVATE_SECRETARY_HOME/secretary.sqlite"
-plutil -lint "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist" >/dev/null
 plutil -lint "$HOME/Library/LaunchAgents/com.privatesecretary.consolidate.plist" >/dev/null
 plutil -lint "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist" >/dev/null
 ! grep -q '@PS_HOME@\|@APP_BINARY@\|@CONSOLIDATE_BINARY@' \
@@ -38,12 +37,10 @@ plutil -lint "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist" >/d
 grep -q 'com.privatesecretary.app' "$INSTALL_DIR/PrivateSecretary.app/Contents/Info.plist"
 grep -q 'LSUIElement' "$INSTALL_DIR/PrivateSecretary.app/Contents/Info.plist"
 grep -q '3.2.1' "$INSTALL_DIR/PrivateSecretary.app/Contents/Info.plist"
-grep -q 'PrivateSecretary.app/Contents/Helpers/secretaryd' \
-    "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist"
-/usr/libexec/PlistBuddy -c 'Print :KeepAlive' \
-    "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist" | grep -qx 'true'
 /usr/libexec/PlistBuddy -c 'Print :KeepAlive:Crashed' \
     "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist" | grep -qx 'true'
+/usr/libexec/PlistBuddy -c 'Print :EnvironmentVariables:PRIVATE_SECRETARY_AUTOSTART' \
+    "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist" | grep -qx '1'
 grep -q 'PrivateSecretary/bin/secretary' \
     "$HOME/Library/LaunchAgents/com.privatesecretary.consolidate.plist"
 

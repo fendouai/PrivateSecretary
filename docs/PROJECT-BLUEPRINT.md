@@ -121,7 +121,7 @@ PrivateSecretary 是一个：
 
 | 区域 | 功能 |
 |---|---|
-| Overview | 采集状态、计数、权限、服务启停、Copy Daily Brief、Dashboard |
+| Overview | 采集状态、计数、**实时截图/OCR/音频/LLM token 指标（2 秒）**、权限、服务启停、Copy Daily Brief、Dashboard |
 | Timeline | 按天浏览 L2/L3，点击详情，复制上下文 |
 | Todos | 新增、完成、重开、dismiss；只改本地状态 |
 | Contacts | 跨渠道联系人、消息数、最近摘要 |
@@ -281,7 +281,7 @@ BM25 词法
 - Timeline / Todos / Contacts / Messages；
 - 菜单栏 App / CLI / MCP / Dashboard；
 - 真实屏幕 OCR、系统音频 ASR、Gmail inbox OCR 行提取；
-- 194 个 Swift Testing 测试。
+- 195 个 Swift Testing 测试。
 
 仍待完成：
 
@@ -435,7 +435,7 @@ BM25 词法
 
 ### 8.3 验收基线
 
-- 194 Swift Testing 测试；
+- 195 Swift Testing 测试；
 - 真实 OCR/系统音频采集；
 - Gmail inbox OCR → message；
 - 软件栈 E2E、App smoke、安装测试、多 Agent 配置；
@@ -475,8 +475,8 @@ BM25 词法
 | 菜单栏 App | 可用；刘海屏需 Dock/窗口 fallback |
 | Gmail inbox OCR → Message list | 已实现，真实提取 6 条 |
 | 本地 LLM | Ollama + Qwen2.5 1.5B 已安装、运行并接入 daemon 配置 |
-| App 后台 helper 长稳 | 通过 launchd + KeepAlive 运行；仍需长期观察 |
-| LaunchAgent 自启动 | 已配置 daemon / menubar / consolidate / ollama |
+| App 后台 helper 长稳 | App 子进程 + TCC 继承；仍需长期观察 |
+| LaunchAgent 自启动 | 已配置 menubar（App + 内嵌 helper）/ consolidate / ollama |
 | 麦克风 | 未实采 |
 | 跨平台 | **目标架构，当前仅 macOS** |
 | 公开分发签名 | ad-hoc，需 Developer ID |

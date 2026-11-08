@@ -93,6 +93,8 @@ struct OverviewView: View {
                     StatCard(title: "Messages", value: "\(model.status?.counts.messages ?? 0)", icon: "bubble.left.and.bubble.right")
                 }
 
+                liveActivityCard
+
                 GroupBox {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
@@ -190,6 +192,100 @@ struct OverviewView: View {
                 MemoryDetailView(result: result) { model.selectedMemory = nil }
             }
         }
+    }
+
+    private var liveActivityCard: some View {
+        let capture = model.status?.capture
+        let usage = model.status?.llmUsage
+        let screenshots = capture?.screenshotsProcessed ?? 0
+        let ocrFrames = capture?.ocrFramesProcessed ?? 0
+        let audio = capture?.audioSecondsProcessed ?? 0
+        let totalTokens = usage?.totalTokens ?? 0
+        return GroupBox {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(model.isServiceRunning ? .green : .orange)
+                        .frame(width: 8, height: 8)
+                    Text(model.isServiceRunning ? "Live capture" : "Capture paused")
+                        .font(.headline)
+                    Spacer()
+                    if let started = capture?.sessionStartedAt {
+                        Text("since \(started.formatted(date: .omitted, time: .shortened))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
+                    LiveMetric(title: "Screenshots", value: formatCount(screenshots), icon: "camera.viewfinder")
+                    LiveMetric(title: "OCR frames", value: formatCount(ocrFrames), icon: "text.viewfinder")
+                    LiveMetric(title: "Audio", value: formatDuration(audio), icon: "waveform")
+                    LiveMetric(title: "LLM tokens", value: formatTokens(totalTokens), icon: "cpu")
+                }
+                HStack(spacing: 14) {
+                    Text("Last frame \(relativeTime(capture?.lastFrameAt))")
+                    Spacer()
+                    if let usage {
+                        Text("prompt \(formatCount(usage.promptTokens)) · completion \(formatCount(usage.completionTokens)) · \(formatCount(usage.calls)) calls")
+                    } else {
+                        Text("LLM usage appears after the first local model call")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            .padding(4)
+        } label: {
+            Label("Session activity", systemImage: "waveform.path.ecg")
+        }
+    }
+
+    private func formatCount(_ value: Int) -> String {
+        NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+    }
+
+    private func formatTokens(_ value: Int) -> String {
+        if value >= 1_000_000 { return String(format: "%.1fM", Double(value) / 1_000_000) }
+        if value >= 1_000 { return String(format: "%.1fk", Double(value) / 1_000) }
+        return formatCount(value)
+    }
+
+    private func formatDuration(_ seconds: Double) -> String {
+        let total = max(0, Int(seconds.rounded()))
+        let hours = total / 3_600
+        let minutes = (total % 3_600) / 60
+        let remaining = total % 60
+        if hours > 0 { return "\(hours)h \(minutes)m" }
+        if minutes > 0 { return "\(minutes)m \(remaining)s" }
+        return "\(remaining)s"
+    }
+
+    private func relativeTime(_ date: Date?) -> String {
+        guard let date else { return "never" }
+        let seconds = max(0, Int(Date().timeIntervalSince(date)))
+        if seconds < 5 { return "just now" }
+        if seconds < 60 { return "\(seconds)s ago" }
+        if seconds < 3_600 { return "\(seconds / 60)m ago" }
+        return "\(seconds / 3_600)h ago"
+    }
+}
+
+private struct LiveMetric: View {
+    let title: String
+    let value: String
+    let icon: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value).font(.system(size: 18, weight: .semibold, design: .rounded)).monospacedDigit()
+                Text(title).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 9))
     }
 }
 

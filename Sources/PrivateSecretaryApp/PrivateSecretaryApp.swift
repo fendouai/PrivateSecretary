@@ -21,6 +21,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         installStatusItem()
         let shouldOpen = ProcessInfo.processInfo.environment["PRIVATE_SECRETARY_SHOW_WINDOW"] == "1"
+        if ProcessInfo.processInfo.environment["PRIVATE_SECRETARY_AUTOSTART"] == "1" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                guard let self else { return }
+                if !self.model.isServiceRunning {
+                    self.model.startService()
+                }
+            }
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
             guard let self else { return }
             if shouldOpen || self.statusItemIsOccluded() {

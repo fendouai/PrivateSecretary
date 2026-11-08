@@ -50,7 +50,7 @@ make llm-test
     "model": {
       "enabled": true,
       "executable": "/usr/bin/python3",
-      "arguments": ["/Users/you/GitHub/PrivateSecretary/scripts/llm-bridge.py"],
+      "arguments": ["/Users/you/GitHub/PrivateSecretary/scripts/llm-bridge.py", "--usage", "/Users/you/.private-secretary/run/llm-usage.json"],
       "timeoutSeconds": 120,
       "maxOutputBytes": 2097152
     }
@@ -59,7 +59,7 @@ make llm-test
     "model": {
       "enabled": true,
       "executable": "/usr/bin/python3",
-      "arguments": ["/Users/you/GitHub/PrivateSecretary/scripts/llm-bridge.py"],
+      "arguments": ["/Users/you/GitHub/PrivateSecretary/scripts/llm-bridge.py", "--usage", "/Users/you/.private-secretary/run/llm-usage.json"],
       "timeoutSeconds": 120,
       "maxOutputBytes": 2097152
     }

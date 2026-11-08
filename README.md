@@ -13,6 +13,7 @@
 - **任务 → todo list**
 - **联系人消息 → contact list / message list**
 - **Gmail 页面 → 可见 inbox 行 OCR → message list**（无邮箱密码、无网络）
+- **Overview 实时活动卡**：截图帧、OCR 帧、音频秒数、本地 LLM token，2 秒刷新
 
 > 产品名保持 **PrivateSecretary**（展示名 Private Secretary）。当前版本 **3.2.1**，只读整理版。
 
@@ -23,7 +24,7 @@
 | 项目 | 状态 |
 |---|---|
 | Swift Package / CLI / MCP / daemon | 可构建、可运行 |
-| 自动化测试 | **194 个 Swift Testing 测试全部通过** |
+| 自动化测试 | **195 个 Swift Testing 测试全部通过** |
 | 菜单栏 App | **可构建、可启动、安装测试通过** |
 | 多 Agent 接入 | Codex / Claude Desktop / Cursor / generic 配置测试通过 |
 | CLI + MCP + daemon 进程级冒烟 | 通过 |
@@ -33,7 +34,7 @@
 | 本地软件栈 E2E | **通过**（socket → SQLite → MCP → CLI → dashboard → digest） |
 | 真实采集 E2E | **通过**：7 条真实 OCR/ASR episode、3 facts、1 todo、联系人消息、review、UI/MCP 全链路；App 内嵌 helper 正在运行 |
 | ScreenCaptureKit | **真实屏幕 OCR + 系统音频 ASR 已验证**（见真实采集报告）；App 自身 TCC 已授权 |
-| LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过；launchd bootstrap + daemon-only TCC 已验证；未做真实注销/重启 |
+| LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过；App 子进程 helper + TCC 已验证；未做真实注销/重启 |
 | 本地 LLM | Ollama + Qwen2.5 1.5B 已接入 intent/fact 适配器 |
 | Codex 模型驱动闭环 | 未完成（本机账户模型不支持 + usage limit） |
 
@@ -340,7 +341,7 @@ Capture daemon (secretaryd)
 ```bash
 open "$HOME/Library/Application Support/PrivateSecretary/PrivateSecretary.app"
 ./scripts/request-permissions.sh   # 也可直接打开系统设置
-launchctl kickstart -k gui/$(id -u)/com.privatesecretary.daemon
+launchctl kickstart -k gui/$(id -u)/com.privatesecretary.menubar
 ```
 
 查看状态：
@@ -375,7 +376,7 @@ curl -L -o ~/.private-secretary/models/ggml-base.bin \
 ## 测试
 
 ```bash
-make test          # 194 Swift Testing 测试
+make test          # 195 Swift Testing 测试
 make smoke         # CLI + MCP + daemon + 隔离 Codex 注册
 make e2e           # 全软件栈：socket → DB → MCP → CLI → dashboard → digest
 make app-test      # SwiftUI 菜单栏 App 启动 smoke
@@ -390,7 +391,7 @@ make verify        # 全部
 
 在只安装 Command Line Tools 的机器上，Swift Testing 模块不在 SwiftPM 默认搜索路径；`scripts/test.sh` 会处理。使用完整 Xcode 的机器不需要。
 
-本机实测见 [测试报告](docs/TEST-REPORT.md) 与 [E2E 测试报告](docs/E2E-TEST-REPORT.md)。GitHub Actions 工作流是手动触发的 macOS 验证；`make verify` 是权威的本地验证入口。
+本机实测见 [测试报告](docs/TEST-REPORT.md) 与 [E2E 测试报告](docs/E2E-TEST-REPORT.md)。GitHub Actions 在 push/PR 时自动运行 macOS 验证；`make verify` 是完整的本地验证入口。
 
 ---
 
@@ -464,7 +465,7 @@ Sources/
   secretary-mcp/    stdio MCP
   secretaryd/       daemon + capture + socket
   PrivateSecretaryApp/ SwiftUI menu bar App
-Tests/              194 个 Swift Testing 测试
+Tests/              195 个 Swift Testing 测试
 skills/private-secretary/SKILL.md
 integrations/       Agent policy + generic MCP config
 launchd/
@@ -486,6 +487,7 @@ docs/
 - [项目蓝图：全天候多模态跨平台纯本地上下文管理器](docs/PROJECT-BLUEPRINT.md)
 - [本地 LLM 接入](docs/LOCAL-LLM.md)
 - [登录自启与 24/7 采集](docs/LOGIN-AUTOSTART.md)
+- [实时活动指标](docs/LIVE-METRICS.md)
 - [Agent 接入](docs/AGENT-INTEGRATION.md)
 - [macOS 授权指引](docs/PERMISSIONS.md)
 - [架构决策](docs/adr/)
@@ -496,13 +498,12 @@ docs/
 安装后由 LaunchAgent 管理：
 
 ```text
-com.privatesecretary.daemon      屏幕/系统音频采集，KeepAlive
-com.privatesecretary.menubar     菜单栏 App，崩溃重启
+com.privatesecretary.menubar     菜单栏 App + 内嵌采集 helper，崩溃重启
 com.privatesecretary.consolidate 每日 02:30 巩固
 com.privatesecretary.ollama      本地 LLM，KeepAlive
 ```
 
-采集 daemon 使用 App 内嵌 helper，TCC 统一到 App；App 不运行也能采集。
+采集 helper 作为 App 子进程运行，才能稳定继承 App 的 Screen Recording TCC。
 
 详见 [登录自启与 24/7 采集](docs/LOGIN-AUTOSTART.md)。
 

@@ -51,6 +51,8 @@ final class AppModel: ObservableObject {
     private(set) var config: AppConfig
     private(set) var service: MemoryService?
     private var refreshTimer: Timer?
+    private var statusTimer: Timer?
+    private var statusRefreshInFlight = false
     private let refreshQueue = DispatchQueue(label: "com.privatesecretary.app.refresh", qos: .userInitiated)
     private let supervisor = ServiceSupervisor()
 
@@ -72,10 +74,14 @@ final class AppModel: ObservableObject {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 8, repeats: true) { [weak self] _ in
             self?.refresh()
         }
+        statusTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            self?.refreshStatusOnly()
+        }
     }
 
     deinit {
         refreshTimer?.invalidate()
+        statusTimer?.invalidate()
     }
 
     var isServiceRunning: Bool {
@@ -107,6 +113,21 @@ final class AppModel: ObservableObject {
             let result = Self.load(service: service, day: day, filter: filter, query: query, unread: unread)
             DispatchQueue.main.async {
                 self.apply(result)
+            }
+        }
+    }
+
+    /// Lightweight status refresh for the live activity card. The heavy
+    /// timeline/message refresh stays on the 8 second cadence.
+    private func refreshStatusOnly() {
+        guard let service, !statusRefreshInFlight else { return }
+        statusRefreshInFlight = true
+        refreshQueue.async { [weak self] in
+            let current = try? service.status()
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let current { self.status = current }
+                self.statusRefreshInFlight = false
             }
         }
     }

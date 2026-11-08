@@ -68,15 +68,15 @@ if [[ "$CONFIG" == "1" ]]; then
         echo "missing $PS_HOME/config.json; run: secretary --home $PS_HOME init" >&2
         exit 1
     }
-    "$PYTHON" - "$PS_HOME/config.json" "$PYTHON" "$BRIDGE" <<'PY'
-import json, sys
-path, python, bridge = sys.argv[1:]
+    "$PYTHON" - "$PS_HOME/config.json" "$PYTHON" "$BRIDGE" "$PS_HOME" <<'PY'
+import json, os, sys
+path, python, bridge, path_home = sys.argv[1:]
 data = json.load(open(path))
 for key in ("intentGate", "factGate"):
     data.setdefault(key, {})["model"] = {
         "enabled": True,
         "executable": python,
-        "arguments": [bridge],
+        "arguments": [bridge, "--usage", os.path.join(path_home, "run", "llm-usage.json")],
         "timeoutSeconds": 120,
         "maxOutputBytes": 2097152,
     }
