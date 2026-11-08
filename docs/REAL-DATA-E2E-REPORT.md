@@ -71,7 +71,29 @@ ep_536fb8a7-452e-46b6-a6fd-9d52a03e7363
 
 按产品规则，**system audio 不生成 todo**，所以这条只进入 L2 记忆。
 
-### 2.3 渠道消息
+### 2.3 第二轮真实采集（2026-11-08）
+
+继续在同一个真实 daemon 上展示新文件并播放新语音：
+
+```text
+真实采集第二轮 2026-11-08
+项目代号 ORBITAL-732。
+决定：本周五前完成 OCR 与 ASR 联合验收。
+今天上午十点和欧阳确认真实采集结果。
+```
+
+产生：
+
+```text
+ep_df493385-...  屏幕切换/旧+新内容 OCR
+ep_5bff0a42-...  ORBITAL-732 屏幕 OCR
+ep_0f6b7ef5-...  ASR：記一下,本週五前完成真實屏幕和語音的聯合宴收。
+fact_0a345915-...  真实采集第二轮 ... 决定：本周五前完成 OCR 与 ASR 联合验收。
+```
+
+这条 pending fact 随后通过 MCP `review_fact(action:"accept")` 接受，pendingReviewFacts 回到 0。
+
+### 2.4 渠道消息
 
 没有微信/邮件账号，无法伪造“真实平台 API”；以下通过产品自带的本地 channel adapter 路径（`message import`）导入真实测试文本：
 
@@ -84,17 +106,17 @@ ep_536fb8a7-452e-46b6-a6fd-9d52a03e7363
 
 ```text
 Private Secretary 3.2.1
-Memory:   2 episodes · 1 fact
+Memory:   5 episodes · 2 facts
 People:   1 contact · 2 messages
 Todos:    1 todo (done)
-Digests:  1
+Digests:  2
 Capture:  running — system audio + screen deltas
 ```
 
 MCP `get_status` 返回：
 
 ```text
-activeFacts=1 episodes=2 contacts=1 messages=2 openTodos=0 pendingReviewFacts=0
+activeFacts=2 episodes=5 contacts=1 messages=2 openTodos=0 pendingReviewFacts=0
 capture.state=running
 ```
 
@@ -108,7 +130,7 @@ Peekaboo 4.9.8 通过 Bridge 驱动真实 `PrivateSecretary.app`。
 
 验证：
 
-- Episodes = 2；
+- Episodes = 5；
 - Open Todos = 0（todo 已通过 UI 标记 done）；
 - Contacts = 1；
 - Messages = 2；
@@ -185,7 +207,7 @@ Peekaboo Settings 验证：
 
 Peekaboo Overview：
 
-- 点击 **Generate Today's Digest**：生成真实日报，含 2 个 episodes、1 fact、1 done todo；
+- 点击 **Generate Today's Digest**：生成真实日报，最终含 5 个 episodes、2 facts、1 done todo；
 - 点击 **Copy Daily Brief**：剪贴板得到真实 timeline/todo/unread/contacts；
 - 点击 **Open HTML Dashboard**：生成 `exports/dashboard-2026-11-07.html`（0600），含 Timeline / Open todos / Unread messages / Contacts。
 
@@ -199,6 +221,7 @@ tools 19
 get_status: episodes=2, facts=1, contacts=1, messages=2, todos=0 open
 get_brief: timeline=3, unread=1, contacts=1
 recall("ORBITAL-731"): 1 result
+recall("ORBITAL-732"): 1 result
 list_todos(all): [('完成 ORBITAL-731 的 HNSW 参数对比','done')]
 list_messages: lark read, email read
 ```
@@ -244,5 +267,5 @@ peekaboo see --app com.privatesecretary.app --mode window --json
 
 ## 9. 结论
 
-真实 OCR、真实系统音频 ASR、L2/L3、真实 UI 浏览/搜索/输入/todo 状态/已读、digest、dashboard、clipboard、MCP 均通过。  
+真实 OCR、真实系统音频 ASR（两轮）、L2/L3、真实 UI 浏览/搜索/输入/todo 状态/已读、review accept、digest、dashboard、clipboard、MCP 均通过。  
 唯一阻断“安装后自动采集”的是 `PrivateSecretary.app` 的 GUI TCC 授权，需要在系统设置中手动打开一次。

@@ -111,7 +111,7 @@ make agent-test
 Screen Recording: Granted（Terminal 启动的 daemon）
 真实系统音频 ASR: 通过（whisper.cpp）
 真实屏幕 OCR: 通过（Vision）
-2 episodes, 1 fact, 1 todo, 1 contact, 2 messages
+5 episodes, 2 facts, 1 todo, 1 contact, 2 messages, 2 digests
 ```
 
 详细证据、截图与 Peekaboo UI 操作见 [真实采集 E2E 报告](REAL-DATA-E2E-REPORT.md)。
