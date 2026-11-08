@@ -392,3 +392,7 @@ ollama pull qwen2.5:1.5b-instruct-q4_K_M
 ```
 
 在 config 的 `intentGate.model` / `factGate.model` 中启用 `scripts/llm-bridge.py`。详见 [本地 LLM 接入](LOCAL-LLM.md)。
+
+## 24/7 自启
+
+见 [登录自启与 24/7 采集](LOGIN-AUTOSTART.md)。

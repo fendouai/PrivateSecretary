@@ -5,6 +5,7 @@
 ### Added
 
 - 本地 LLM 接入：Ollama + Qwen2.5 1.5B → `scripts/llm-bridge.py` → intent/fact model adapter；纯 localhost。
+- 24/7 登录自启：daemon / menubar / consolidate / ollama LaunchAgent；daemon 使用内嵌 helper，KeepAlive。
 - Gmail inbox OCR extractor：从 Chrome Gmail 可见 inbox 行提取 sender / subject / time，写入 ContactMessage；纯规则、本地、无网络。
 - CLI `secretary message extract-gmail <episode_id>`，可重处理已采集 episode。
 

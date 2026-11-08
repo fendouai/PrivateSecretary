@@ -33,7 +33,7 @@
 | 本地软件栈 E2E | **通过**（socket → SQLite → MCP → CLI → dashboard → digest） |
 | 真实采集 E2E | **通过**：7 条真实 OCR/ASR episode、3 facts、1 todo、联系人消息、review、UI/MCP 全链路；App 内嵌 helper 正在运行 |
 | ScreenCaptureKit | **真实屏幕 OCR + 系统音频 ASR 已验证**（见真实采集报告）；App 自身 TCC 已授权 |
-| LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过；真实登录会话未测试 |
+| LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过；launchd bootstrap + daemon-only TCC 已验证；未做真实注销/重启 |
 | 本地 LLM | Ollama + Qwen2.5 1.5B 已接入 intent/fact 适配器 |
 | Codex 模型驱动闭环 | 未完成（本机账户模型不支持 + usage limit） |
 
@@ -485,10 +485,26 @@ docs/
 - [真实采集 E2E 报告](docs/REAL-DATA-E2E-REPORT.md)
 - [项目蓝图：全天候多模态跨平台纯本地上下文管理器](docs/PROJECT-BLUEPRINT.md)
 - [本地 LLM 接入](docs/LOCAL-LLM.md)
+- [登录自启与 24/7 采集](docs/LOGIN-AUTOSTART.md)
 - [Agent 接入](docs/AGENT-INTEGRATION.md)
 - [macOS 授权指引](docs/PERMISSIONS.md)
 - [架构决策](docs/adr/)
 - [历史 PRD v3.0](docs/archive/PRD-v3.0-execution-baseline.md)
+
+## 24/7 运行
+
+安装后由 LaunchAgent 管理：
+
+```text
+com.privatesecretary.daemon      屏幕/系统音频采集，KeepAlive
+com.privatesecretary.menubar     菜单栏 App，崩溃重启
+com.privatesecretary.consolidate 每日 02:30 巩固
+com.privatesecretary.ollama      本地 LLM，KeepAlive
+```
+
+采集 daemon 使用 App 内嵌 helper，TCC 统一到 App；App 不运行也能采集。
+
+详见 [登录自启与 24/7 采集](docs/LOGIN-AUTOSTART.md)。
 
 ## Contributing
 

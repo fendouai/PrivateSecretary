@@ -285,8 +285,7 @@ BM25 词法
 
 仍待完成：
 
-- App 内嵌 helper 在后台长期稳定（App Nap）；
-- LaunchAgent 登录自启动；
+- 长时间 App Nap 观察；
 - 麦克风真实 ASR；
 - 更多渠道 adapter；
 - Developer ID 签名与 notarization。
@@ -476,8 +475,8 @@ BM25 词法
 | 菜单栏 App | 可用；刘海屏需 Dock/窗口 fallback |
 | Gmail inbox OCR → Message list | 已实现，真实提取 6 条 |
 | 本地 LLM | Ollama + Qwen2.5 1.5B 已安装、运行并接入 daemon 配置 |
-| App 后台 helper 长稳 | 存在 App Nap 停帧问题，待修 |
-| LaunchAgent 自启动 | 未配置 |
+| App 后台 helper 长稳 | 通过 launchd + KeepAlive 运行；仍需长期观察 |
+| LaunchAgent 自启动 | 已配置 daemon / menubar / consolidate / ollama |
 | 麦克风 | 未实采 |
 | 跨平台 | **目标架构，当前仅 macOS** |
 | 公开分发签名 | ad-hoc，需 Developer ID |

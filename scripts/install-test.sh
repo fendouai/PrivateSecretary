@@ -40,6 +40,10 @@ grep -q 'LSUIElement' "$INSTALL_DIR/PrivateSecretary.app/Contents/Info.plist"
 grep -q '3.2.1' "$INSTALL_DIR/PrivateSecretary.app/Contents/Info.plist"
 grep -q 'PrivateSecretary.app/Contents/Helpers/secretaryd' \
     "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist"
+/usr/libexec/PlistBuddy -c 'Print :KeepAlive' \
+    "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist" | grep -qx 'true'
+/usr/libexec/PlistBuddy -c 'Print :KeepAlive:Crashed' \
+    "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist" | grep -qx 'true'
 grep -q 'PrivateSecretary/bin/secretary' \
     "$HOME/Library/LaunchAgents/com.privatesecretary.consolidate.plist"
 
