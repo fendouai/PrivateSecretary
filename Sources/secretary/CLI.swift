@@ -93,6 +93,7 @@ final class CLIRunner {
                   [--handle <id>] [--direction inbound|outbound]
                   [--at ISO-8601] [--thread text] [--external-id id]
       message import --file <path> | --stdin [--channel default] [--json]
+      message extract-gmail <episode_id> [--json]
       contact merge <source_id> --into <target_id>
       review list [--json]
       review accept|reject|correct <fact_id> [--statement text]
@@ -703,6 +704,19 @@ final class CLIRunner {
     }
 
     private func runMessage(_ service: MemoryService, _ tokens: [String]) throws {
+        if tokens.first == "extract-gmail" {
+            let args = try CLIArguments(tokens: Array(tokens.dropFirst()), valueOptions: [], flagOptions: [])
+            guard let id = args.positionals.first, args.positionals.count == 1 else {
+                throw CLIError.message("message extract-gmail requires one episode_id")
+            }
+            let count = try service.importGmailMessages(fromEpisodeID: id)
+            if jsonOutput {
+                print(try Self.jsonText(["imported": count, "episode_id": id]))
+            } else {
+                print("Imported \(count) Gmail row(s) from \(id)")
+            }
+            return
+        }
         if tokens.first == "import" {
             let args = try CLIArguments(
                 tokens: Array(tokens.dropFirst()),

@@ -75,6 +75,13 @@ public struct CommandModelConfig: Codable, Equatable, Sendable {
     public var maxOutputBytes: Int = 1_048_576
 }
 
+public struct EmailScreenConfig: Codable, Equatable, Sendable {
+    /// When enabled, Gmail inbox rows already visible in the captured screen
+    /// are archived as email messages. No network access is performed.
+    public var enabled: Bool = true
+    public var maximumMessagesPerScreen: Int = 30
+}
+
 public struct IntentGateConfig: Codable, Equatable, Sendable {
     public var enabled: Bool = true
     public var explicitThreshold: Double = 0.8
@@ -136,6 +143,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var privacy = PrivacyConfig()
     public var capture = CaptureConfig()
     public var intentGate = IntentGateConfig()
+    public var emailScreen = EmailScreenConfig()
     public var factGate = FactGateConfig()
     public var salience = SalienceConfig()
     public var consolidation = ConsolidationConfig()
@@ -162,6 +170,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         check(retrieval.defaultLimit > 0 && retrieval.defaultLimit <= retrieval.maximumLimit, "retrieval.defaultLimit must be in 1...maximumLimit")
         check(retrieval.vectorDimensions >= 64, "retrieval.vectorDimensions must be >= 64")
         check(consolidation.maximumDigestEntries >= 1, "consolidation.maximumDigestEntries must be >= 1")
+        check(emailScreen.maximumMessagesPerScreen >= 1 && emailScreen.maximumMessagesPerScreen <= 100, "emailScreen.maximumMessagesPerScreen must be in 1...100")
         return errors
     }
 }

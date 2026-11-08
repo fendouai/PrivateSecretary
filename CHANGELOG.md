@@ -2,6 +2,12 @@
 
 ## v3.2.1 — 2026-11-07
 
+### Added
+
+- Gmail inbox OCR extractor：从 Chrome Gmail 可见 inbox 行提取 sender / subject / time，写入 ContactMessage；纯规则、本地、无网络。
+- CLI `secretary message extract-gmail <episode_id>`，可重处理已采集 episode。
+
+
 真实采集验证与小修复。
 
 - 真实 OCR/ASR 采集测试：7 episodes、3 facts、1 todo、1 contact、2 messages。

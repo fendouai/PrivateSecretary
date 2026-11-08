@@ -274,6 +274,37 @@ public final class MemoryService {
         try store.correctFact(id: id, statement: correctedStatement, action: action, at: now)
     }
 
+    /// Import visible Gmail inbox rows from an already captured screen episode.
+    /// This is an OCR-only, local operation; no mail account or network is used.
+    @discardableResult
+    public func importGmailMessages(fromEpisodeID episodeID: String, now: Date = Date()) throws -> Int {
+        guard let episode = try store.fetchEpisode(id: episodeID) else {
+            throw MemoryServiceError.notFound("episode")
+        }
+        let extracted = EmailScreenExtractor.extract(
+            windowTitle: episode.windowTitle,
+            ocrText: episode.ocrText,
+            regions: episode.ocrRegions,
+            now: now,
+            limit: config.emailScreen.maximumMessagesPerScreen
+        )
+        guard !extracted.isEmpty else { return 0 }
+        for message in extracted {
+            _ = try store.recordMessage(
+                channel: "email",
+                contactName: message.contactName,
+                handle: message.handle,
+                direction: .inbound,
+                text: message.subject,
+                timestamp: message.timestamp,
+                externalID: message.externalID,
+                isRead: true,
+                now: now
+            )
+        }
+        return extracted.count
+    }
+
     public func brief(
         dayKey: String? = nil,
         now: Date = Date(),

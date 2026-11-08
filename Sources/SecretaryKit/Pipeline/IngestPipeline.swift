@@ -149,6 +149,33 @@ public final class IngestPipeline: @unchecked Sendable {
             )
         }
 
+        if config.emailScreen.enabled, candidate.source == .screen {
+            let extracted = EmailScreenExtractor.extract(
+                windowTitle: candidate.windowTitle,
+                ocrText: candidate.ocrText,
+                regions: candidate.ocrRegions,
+                now: candidate.capturedAt,
+                limit: config.emailScreen.maximumMessagesPerScreen
+            )
+            for message in extracted {
+                do {
+                    _ = try store.recordMessage(
+                        channel: "email",
+                        contactName: message.contactName,
+                        handle: message.handle,
+                        direction: .inbound,
+                        text: message.subject,
+                        timestamp: message.timestamp,
+                        externalID: message.externalID,
+                        isRead: true,
+                        now: now
+                    )
+                } catch {
+                    PSLog.error("email screen import failed: \(error.localizedDescription)")
+                }
+            }
+        }
+
         return IngestResult(
             accepted: true,
             episode: episode,

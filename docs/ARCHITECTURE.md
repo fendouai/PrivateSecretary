@@ -202,6 +202,8 @@ open ⇄ dismissed
 
 **不发送消息。** 这是归档 API。
 
+`EmailScreenExtractor` 在写入屏幕 episode 后，仅对 Gmail inbox 页面做确定性 OCR 行提取（sender / subject / time → ContactMessage），无网络、无邮箱密码；其他页面不处理。可用 `secretary message extract-gmail <episode_id>` 重处理旧 episode。
+
 ## 6.1 MCP / CLI 视图
 
 MCP 的 19 个工具分为：

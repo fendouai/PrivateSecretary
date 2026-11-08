@@ -48,6 +48,10 @@
     },
     "supersedeConfidenceMargin" : 0.08
   },
+  "emailScreen" : {
+    "enabled" : true,
+    "maximumMessagesPerScreen" : 30
+  },
   "intentGate" : {
     "appThrottleSeconds" : 30,
     "duplicateSimilarity" : 0.92,
