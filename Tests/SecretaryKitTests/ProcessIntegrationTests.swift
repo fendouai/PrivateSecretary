@@ -175,6 +175,9 @@ private func runAndCapture(_ executable: String, _ arguments: [String]) throws -
     #expect(status["ok"] as? Bool == true)
     let result = status["result"] as? [String: Any]
     #expect((result?["capture"] as? [String: Any])?["state"] as? String == "disabled")
+    // The socket file can appear a moment before the ingest handler is fully
+    // warm on slower CI runners.
+    usleep(200_000)
     let ingest = try UnixSocketClient.send([
         "op": "ingest",
         "candidate": [
@@ -184,10 +187,10 @@ private func runAndCapture(_ executable: String, _ arguments: [String]) throws -
             "transcript": "帮我记一下 daemon 进程集成测试"
         ]
     ], to: socket)
-    #expect(ingest["ok"] as? Bool == true)
+    #expect(ingest["ok"] as? Bool == true, "\(ingest)")
     let ingested = ingest["result"] as? [String: Any]
-    #expect(ingested?["accepted"] as? Bool == true)
-    #expect((ingested?["todo"] as? [String: Any])?["status"] as? String == "open")
+    #expect(ingested?["accepted"] as? Bool == true, "\(ingest)")
+    #expect((ingested?["todo"] as? [String: Any])?["status"] as? String == "open", "\(ingest)")
     process.terminate()
     process.waitUntilExit()
     #expect(process.terminationStatus == 0)

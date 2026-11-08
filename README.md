@@ -381,6 +381,8 @@ make e2e           # 全软件栈：socket → DB → MCP → CLI → dashboard 
 make app-test      # SwiftUI 菜单栏 App 启动 smoke
 make install-test  # 隔离 HOME 安装/卸载/清除（含菜单栏 App）
 make agent-test    # Claude Desktop / Cursor / generic / Codex 配置与 MCP 握手
+make llm-install   # Ollama + Qwen2.5 + LaunchAgent + PrivateSecretary model config
+make llm-test      # 本地 LLM endpoint / classify / facts / daemon 状态
 make lint
 make soak          # release 2k 事件 + 100 检索
 make verify        # 全部

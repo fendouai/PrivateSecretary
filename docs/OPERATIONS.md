@@ -385,4 +385,10 @@ make verify
 ollama pull qwen2.5:1.5b-instruct-q4_K_M
 ```
 
+一条命令部署：
+
+```bash
+./scripts/install-local-llm.sh
+```
+
 在 config 的 `intentGate.model` / `factGate.model` 中启用 `scripts/llm-bridge.py`。详见 [本地 LLM 接入](LOCAL-LLM.md)。

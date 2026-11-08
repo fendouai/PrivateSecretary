@@ -13,29 +13,31 @@ ModelCommandClient (intentGate.model / factGate.model)
 
 不调用云端 API，不发送音频/OCR 文本到外网。
 
-## 1. 启动 Ollama
+## 1. 一键安装
 
 ```bash
-/opt/homebrew/bin/ollama serve
+PRIVATE_SECRETARY_HOME="$HOME/.private-secretary"   ./scripts/install-local-llm.sh
 ```
 
-如果希望登录后自动启动，可以使用 Homebrew services（当前机器的 brew services 曾因 Ruby 环境报错，建议先修复 Homebrew 后再启用）：
+脚本会：
+
+1. 安装 `com.privatesecretary.ollama` LaunchAgent，登录后自动启动；
+2. 下载/检查 `qwen2.5:1.5b-instruct-q4_K_M`；
+3. 写入 `intentGate.model` / `factGate.model` 配置；
+4. 通过 localhost 验证模型。
+
+手动检查：
 
 ```bash
-brew services start ollama
-```
-
-下载模型：
-
-```bash
-ollama pull qwen2.5:1.5b-instruct-q4_K_M
-```
-
-检查：
-
-```bash
-ollama list
 /usr/bin/curl -s http://127.0.0.1:11434/api/tags
+ollama list
+make llm-test
+```
+
+如果只想使用已有的 Ollama 服务：
+
+```bash
+./scripts/install-local-llm.sh --no-service
 ```
 
 ## 2. 配置 PrivateSecretary

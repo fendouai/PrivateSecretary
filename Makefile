@@ -1,4 +1,4 @@
-.PHONY: build test release demo install uninstall lint smoke e2e app-test install-test agent-test soak verify clean
+.PHONY: build test release demo install uninstall lint smoke e2e app-test install-test agent-test llm-install llm-test soak verify clean
 
 build:
 	swift build
@@ -35,6 +35,12 @@ install-test:
 
 agent-test:
 	./scripts/agent-integration-test.sh
+
+llm-install:
+	./scripts/install-local-llm.sh
+
+llm-test:
+	./scripts/llm-smoke.sh
 
 soak:
 	./scripts/soak-test.sh
