@@ -1,5 +1,10 @@
 # PrivateSecretary
 
+[![CI](https://github.com/fendouai/PrivateSecretary/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fendouai/PrivateSecretary/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/fendouai/PrivateSecretary?include_prereleases)](https://github.com/fendouai/PrivateSecretary/releases)
+[![Read-only](https://img.shields.io/badge/side%20effects-none-brightgreen)](#只读边界)
+
 本地、只读的个人上下文整理器。持续感知系统音频与屏幕变化，在写入时完成结构化提取，通过显著性驱动的巩固形成可回溯的记忆；把明确的意图整理成 todo，把各渠道消息汇总成 contact/message 列表。
 
 **没有任务执行。没有发送、修改、删除或外部 API 调用。**
@@ -482,6 +487,23 @@ docs/
 - [macOS 授权指引](docs/PERMISSIONS.md)
 - [架构决策](docs/adr/)
 - [历史 PRD v3.0](docs/archive/PRD-v3.0-execution-baseline.md)
+
+## Contributing
+
+PrivateSecretary is an open project. Contributions are welcome if they preserve the read-only boundary:
+
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md)
+- [Issue templates](.github/ISSUE_TEMPLATE)
+- [Project blueprint](docs/PROJECT-BLUEPRINT.md)
+
+```bash
+git clone https://github.com/fendouai/PrivateSecretary.git
+cd PrivateSecretary
+make test
+make verify
+```
 
 ## License
 

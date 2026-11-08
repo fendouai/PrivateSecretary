@@ -1,9 +1,10 @@
 name: macOS verification
 
-# Manual by default: GitHub-hosted macOS runners require a paid plan for private
-# repositories. Run `make verify` locally; configure a macOS runner and dispatch
-# this workflow when one is available.
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -20,10 +21,8 @@ jobs:
         run: make test
       - name: Smoke
         run: make smoke
-      - name: App smoke
-        run: make app-test
-      - name: Installer packaging
-        run: make install-test
+      - name: E2E
+        run: make e2e
       - name: Agent integrations
         run: make agent-test
       - name: Soak

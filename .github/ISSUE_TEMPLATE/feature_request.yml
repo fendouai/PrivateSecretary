@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a capability that respects the read-only boundary
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Read-only boundary
+      options:
+        - label: This does not require executing, sending, or modifying external content.
+          required: true
+        - label: This does not add hidden network access or telemetry.
+          required: true
