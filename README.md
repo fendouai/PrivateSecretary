@@ -25,8 +25,8 @@
 | Vision OCR | 本机真实图片识别通过 |
 | whisper.cpp ASR | 本机真实语音模型调用通过（可选模型） |
 | 本地软件栈 E2E | **通过**（socket → SQLite → MCP → CLI → dashboard → digest） |
-| 真实采集 E2E | **通过**：5 条真实 OCR/ASR episode、2 facts、1 todo、联系人消息、review、UI/MCP 全链路 |
-| ScreenCaptureKit | **真实屏幕 OCR + 系统音频 ASR 已验证**（见真实采集报告）；App 自身 TCC 仍需授权 |
+| 真实采集 E2E | **通过**：7 条真实 OCR/ASR episode、3 facts、1 todo、联系人消息、review、UI/MCP 全链路；App 内嵌 helper 正在运行 |
+| ScreenCaptureKit | **真实屏幕 OCR + 系统音频 ASR 已验证**（见真实采集报告）；App 自身 TCC 已授权 |
 | LaunchAgent 安装 | 隔离 HOME 安装/卸载/清除通过；真实登录会话未测试 |
 | Codex 模型驱动闭环 | 未完成（本机账户模型不支持 + usage limit） |
 

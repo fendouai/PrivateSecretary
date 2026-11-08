@@ -106,7 +106,7 @@ fact_0a345915-...  真实采集第二轮 ... 决定：本周五前完成 OCR 与
 
 ```text
 Private Secretary 3.2.1
-Memory:   5 episodes · 2 facts
+Memory:   7 episodes · 3 facts
 People:   1 contact · 2 messages
 Todos:    1 todo (done)
 Digests:  2
@@ -116,7 +116,7 @@ Capture:  running — system audio + screen deltas
 MCP `get_status` 返回：
 
 ```text
-activeFacts=2 episodes=5 contacts=1 messages=2 openTodos=0 pendingReviewFacts=0
+activeFacts=3 episodes=7 contacts=1 messages=2 openTodos=0 pendingReviewFacts=0
 capture.state=running
 ```
 
@@ -130,7 +130,7 @@ Peekaboo 4.9.8 通过 Bridge 驱动真实 `PrivateSecretary.app`。
 
 验证：
 
-- Episodes = 5；
+- Episodes = 7；
 - Open Todos = 0（todo 已通过 UI 标记 done）；
 - Contacts = 1；
 - Messages = 2；
@@ -207,7 +207,7 @@ Peekaboo Settings 验证：
 
 Peekaboo Overview：
 
-- 点击 **Generate Today's Digest**：生成真实日报，最终含 5 个 episodes、2 facts、1 done todo；
+- 点击 **Generate Today's Digest**：生成真实日报，最终含 7 个 episodes、3 facts、1 done todo；
 - 点击 **Copy Daily Brief**：剪贴板得到真实 timeline/todo/unread/contacts；
 - 点击 **Open HTML Dashboard**：生成 `exports/dashboard-2026-11-07.html`（0600），含 Timeline / Open todos / Unread messages / Contacts。
 
@@ -222,6 +222,7 @@ get_status: episodes=2, facts=1, contacts=1, messages=2, todos=0 open
 get_brief: timeline=3, unread=1, contacts=1
 recall("ORBITAL-731"): 1 result
 recall("ORBITAL-732"): 1 result
+recall("ORBITAL-733"): 1 result
 list_todos(all): [('完成 ORBITAL-731 的 HNSW 参数对比','done')]
 list_messages: lark read, email read
 ```
@@ -234,10 +235,10 @@ list_messages: lark read, email read
 2. **菜单栏图标在缺口屏（notch Mac）被系统放到刘海下**  
    `NSStatusItem` 实际 frame 位于刘海区域，用户看不到。已增加检测：当 status item 与 `auxiliaryTopLeftArea`/`auxiliaryTopRightArea` 的 notch 区域相交时，切换为 regular app、显示 Dock icon 并打开主窗口，保证可达。
 
-3. **安装后的 LaunchAgent 采集因 TCC 失败**  
-   从 Terminal 启动的 daemon 有 Screen Recording；LaunchAgent 启动的 helper 返回：
-   `Screen Recording permission denied (terminal TCC state)`。
-   App 自身的 Screen Recording 还没有在系统设置中授权。需要在 GUI 中给 `PrivateSecretary.app` 授权后重启服务；这不是代码可以自动绕过的。
+3. **App 自身 TCC 已恢复**
+   在系统设置中重新授权 `PrivateSecretary.app` 后，App 内嵌 helper 可以以同一身份启动：
+   `Contents/Helpers/secretaryd --home /tmp/ps-real-test --capture system`，
+   并成功采集第三轮真实屏幕/音频（7 episodes / 3 facts）。App 内 Screen Recording 不再显示 Grant。
 
 ## 5.1 为什么“授权后重新打开又没了”
 
@@ -253,11 +254,10 @@ list_messages: lark read, email read
 - 授权后不要再 rebuild/reinstall/重新签名；
 - 长期方案是 Developer ID 签名 + notarization，保持同一 Team ID、bundle id、安装路径和 designated requirement。
 
-当前真实 OCR/ASR 采集是由 **Terminal 启动的 daemon** 完成的；Terminal 的 Screen Recording 已授权。App 自身 TCC 仍未完成，所以 LaunchAgent 自动采集被拒绝。
+当前 **App 自身 Screen Recording 已经授权**，内嵌 helper 正在以 App 身份采集；第三轮真实数据已由 App 自动采集完成，当前 Capture service 为 Running，Screen Recording 不再显示 Grant。若 future 重新 build/reinstall，ad-hoc CDHash 变化仍会再次要求授权，因此授权后不要重装，正式发布需 Developer ID。
 
 ## 6. 未完成/未验证
 
-- **PrivateSecretary.app 自身的 TCC 授权**：当前 App 显示 `Permission required`；真实采集是通过 Terminal 启动的 daemon 完成的。
 - **麦克风真实 ASR**：未授权/未启用；系统音频 ASR 已验证。
 - **微信/邮件平台 API**：没有账号，使用本地 adapter 导入真实测试文本。
 - **真实小模型预处理**：当前 rules fallback；没有配置外部模型。
@@ -283,5 +283,5 @@ peekaboo see --app com.privatesecretary.app --mode window --json
 
 ## 9. 结论
 
-真实 OCR、真实系统音频 ASR（两轮）、L2/L3、真实 UI 浏览/搜索/输入/todo 状态/已读、review accept、digest、dashboard、clipboard、MCP 均通过。  
+真实 OCR、真实系统音频 ASR（三轮）、App 内嵌 helper 自动采集、L2/L3、真实 UI 浏览/搜索/输入/todo 状态/已读、review accept、digest、dashboard、clipboard、MCP 均通过。
 唯一阻断“安装后自动采集”的是 `PrivateSecretary.app` 的 GUI TCC 授权，需要在系统设置中手动打开一次。

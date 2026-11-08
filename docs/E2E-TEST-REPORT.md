@@ -2,7 +2,7 @@
 
 **日期**：2026-11-07  
 **版本**：PrivateSecretary 3.2.1
-**结论**：**本地软件栈 E2E 与真实采集 E2E 均已通过**。真实采集细节见 [真实采集报告](REAL-DATA-E2E-REPORT.md)。麦克风、App 自身 TCC 自动采集、长期运行和真实 Codex 模型闭环仍未完成，原因见第 4–6 节。
+**结论**：**本地软件栈 E2E 与真实采集 E2E 均已通过**。真实采集细节见 [真实采集报告](REAL-DATA-E2E-REPORT.md)。麦克风、长期运行和真实 Codex 模型闭环仍未完成，原因见第 4–6 节。
 
 ## 1. 执行命令
 
@@ -108,10 +108,10 @@ make agent-test
 2026-11-07 已完成真实采集：
 
 ```text
-Screen Recording: Granted（Terminal 启动的 daemon）
+Screen Recording: Granted（App 内嵌 helper 已实际运行）
 真实系统音频 ASR: 通过（whisper.cpp）
 真实屏幕 OCR: 通过（Vision）
-5 episodes, 2 facts, 1 todo, 1 contact, 2 messages, 2 digests
+7 episodes, 3 facts, 1 todo, 1 contact, 2 messages, 2 digests
 ```
 
 详细证据、截图与 Peekaboo UI 操作见 [真实采集 E2E 报告](REAL-DATA-E2E-REPORT.md)。
@@ -140,8 +140,8 @@ Screen Recording: Granted（Terminal 启动的 daemon）
 
 | 项目 | 状态 | 原因 |
 |---|---|---|
-| 真实 ScreenCaptureKit / 系统音频 | **通过**（Terminal daemon；OCR/ASR/真实数据报告） |
-| App 自身 TCC 自动采集 | 未完成 | App 的 Screen Recording 未授权；LaunchAgent helper 被 TCC 拒绝 |
+| 真实 ScreenCaptureKit / 系统音频 | **通过**（Terminal daemon + App 内嵌 helper；OCR/ASR/真实数据报告） |
+| App 自身 TCC 自动采集 | **通过** | App 内嵌 helper 在 Screen Recording 授权下采集真实 OCR/ASR；已实际运行 |
 | 麦克风采集 | 未完成 | 默认关闭、未授权 |
 | 真实 LaunchAgent 登录启动 | 部分通过 | 打包/启动验证；真实用户 GUI 会话 bootstrap 未完成 |
 | 第三方渠道 API（Email/Lark/WeChat） | 未完成 | 无账号/不引入外部写权限；通过本地 adapter 导入测试文本 |

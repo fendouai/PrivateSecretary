@@ -4,7 +4,7 @@
 
 真实采集验证与小修复。
 
-- 真实 OCR/ASR 采集测试：5 episodes、2 facts、1 todo、1 contact、2 messages。
+- 真实 OCR/ASR 采集测试：7 episodes、3 facts、1 todo、1 contact、2 messages。
 - 修复 LaunchAgent consolidate 模板占位符导致的 CLI 路径错误。
 - 菜单栏改为 `NSStatusItem` + AppKit 窗口；刘海屏遮挡时自动切 Dock/窗口 fallback。
 - 增加真实采集 E2E 报告和截图。
@@ -22,7 +22,7 @@
 - `scripts/install-agent.sh`：Codex / Claude Desktop / Cursor / generic MCP 配置。
 - `AGENT-INTEGRATION.md`、`AGENT-POLICY.md`、generic MCP 示例。
 - `make app-test`、`make agent-test`。
-- 真实采集验证：ScreenCaptureKit 屏幕 OCR + 系统音频 whisper.cpp，5 episodes / 2 facts / 1 todo / 1 contact / 2 messages。
+- 真实采集验证：ScreenCaptureKit 屏幕 OCR + 系统音频 whisper.cpp，7 episodes / 3 facts / 1 todo / 1 contact / 2 messages。
 - 修复 LaunchAgent consolidate 模板占位符，新增 install-test 断言。
 - 菜单栏 App 改为 `NSStatusItem` + AppKit 窗口；刘海屏 status item 被遮挡时自动切 Dock/窗口 fallback。
 

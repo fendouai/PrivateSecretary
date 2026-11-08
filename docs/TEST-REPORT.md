@@ -251,7 +251,7 @@ SOAK PASSED (p95 target 120ms)
 
 ## 9.1 真实采集
 
-真实屏幕 OCR、系统音频 ASR、App UI（Peekaboo）、MCP 真实数据测试见 [真实采集 E2E 报告](REAL-DATA-E2E-REPORT.md)。本轮真实数据为 5 episodes、2 facts、1 todo、1 contact、2 messages、2 digests。
+真实屏幕 OCR、系统音频 ASR、App UI（Peekaboo）、MCP 真实数据测试见 [真实采集 E2E 报告](REAL-DATA-E2E-REPORT.md)。本轮真实数据为 7 episodes、3 facts、1 todo、1 contact、2 messages、2 digests。
 
 ## 10. E2E
 
