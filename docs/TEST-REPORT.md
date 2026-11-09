@@ -30,7 +30,7 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 ```
 
 ```text
-✔ Test run with 195 tests in 0 suites passed after 21.765 seconds.
+✔ Test run with 200 tests in 0 suites passed after 4.871 seconds.
 ```
 
 | 文件 | 测试数 | 覆盖 |
@@ -50,7 +50,8 @@ PRIVATE_SECRETARY_TEST_WHISPER_MODEL=/path/to/ggml-base.bin \
 | `EmailScreenTests.swift` | 4 | Gmail inbox OCR、去重、非 Gmail 页、episode 重处理 |
 | `ProcessIntegrationTests.swift` | 5 | MCP、CLI、daemon、TCC、brief/dashboard/import/context/merge |
 | `RobustnessTests.swift` | 5 | 400 条随机时间查询、超长输入、无效导入、Unicode |
-| **合计** | **195** | |
+| `TimelineOrganizerTests.swift` | 5 | timeline→todos/messages、去重、Gmail 行、噪音过滤 |
+| **合计** | **200** | |
 
 ### 已验证行为
 
@@ -174,7 +175,7 @@ Release，真实 pipeline + 100 次混合检索：
 ### 2,000 事件
 
 ```text
-accepted=2000/2000 ingest=103/s p50=17.1ms p95=24.9ms max=29.8ms db=3956KiB
+accepted=2000/2000 ingest=67/s p50=20.5ms p95=30.6ms max=42.6ms db=3956KiB
 SOAK PASSED
 ```
 

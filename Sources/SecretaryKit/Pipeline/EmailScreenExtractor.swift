@@ -97,8 +97,10 @@ public enum EmailScreenExtractor {
         guard var value = text?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else { return nil }
         value = value.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         value = value.trimmingCharacters(in: CharacterSet(charactersIn: "-—| "))
-        let blocked = ["写邮件", "收件箱", "已加星标", "已延后", "重要邮件", "已发邮件", "草稿", "购物", "动态", "论坛", "推广", "标签", "显示更多标签", "搜索邮件"]
+        let blocked = ["写邮件", "收件箱", "已加星标", "已延后", "重要邮件", "已发邮件", "草稿", "购物", "动态", "论坛", "推广", "标签", "显示更多标签", "搜索邮件", "匿名", "用户", "Private Secretary", "PrivateSecretary"]
         guard !blocked.contains(where: { value == $0 || value.hasPrefix($0 + " ") }) else { return nil }
+        let uiNoise = ["公众号", "收入变现", "Overview", "Timeline", "Episodes", "Contacts", "Messages", "Settings", "Open Todos"]
+        if uiNoise.contains(where: { value.contains($0) }) { return nil }
         return TextAnalyzer.truncated(value, limit: 600)
     }
 

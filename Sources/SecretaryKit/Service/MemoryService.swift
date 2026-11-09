@@ -305,6 +305,17 @@ public final class MemoryService {
         return extracted.count
     }
 
+    /// Backfill/refresh todos and messages from the captured L2 timeline.
+    public func organize(
+        since: Date? = nil,
+        limit: Int = 1_000,
+        force: Bool = false,
+        dryRun: Bool = false
+    ) throws -> OrganizerReport {
+        try TimelineOrganizer(store: store, config: config, paths: paths)
+            .organize(since: since, limit: limit, force: force, dryRun: dryRun)
+    }
+
     public func brief(
         dayKey: String? = nil,
         now: Date = Date(),

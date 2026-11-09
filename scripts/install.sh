@@ -72,13 +72,14 @@ fi
 
 echo "== Installing LaunchAgents =="
 render_template() {
-    /usr/bin/python3 - "$1" "$2" "$3" "$4" "${5:-}" <<'PY'
+    /usr/bin/python3 - "$1" "$2" "$3" "$4" "${5:-}" "${6:-}" <<'PY'
 import pathlib, sys
-template, destination, app_binary, home, consolidate_binary = sys.argv[1:]
+template, destination, app_binary, home, consolidate_binary, organize_binary = sys.argv[1:]
 text = pathlib.Path(template).read_text()
 text = text.replace("@APP_BINARY@", app_binary)
 text = text.replace("@PS_HOME@", home)
 text = text.replace("@CONSOLIDATE_BINARY@", consolidate_binary)
+text = text.replace("@ORGANIZE_BINARY@", organize_binary)
 pathlib.Path(destination).write_text(text)
 PY
 }
@@ -91,16 +92,19 @@ render_template "$ROOT/launchd/com.privatesecretary.consolidate.plist.template" 
 render_template "$ROOT/launchd/com.privatesecretary.menubar.plist.template" \
     "$LAUNCH_AGENTS/com.privatesecretary.menubar.plist" \
     "$APP/Contents/MacOS/PrivateSecretary" "$PS_HOME"
-for plist in consolidate menubar; do
+render_template "$ROOT/launchd/com.privatesecretary.organizer.plist.template" \
+    "$LAUNCH_AGENTS/com.privatesecretary.organizer.plist" \
+    "$APP/Contents/MacOS/PrivateSecretary" "$PS_HOME" "" "$INSTALL_DIR/bin/secretary"
+for plist in consolidate menubar organizer; do
     plutil -lint "$LAUNCH_AGENTS/com.privatesecretary.$plist.plist" >/dev/null
 done
 
 if [[ "${PRIVATE_SECRETARY_SKIP_LAUNCHCTL:-0}" != "1" ]]; then
-    for agent in menubar daemon consolidate; do
+    for agent in menubar daemon consolidate organizer; do
         launchctl bootout "gui/$UID_NUM/com.privatesecretary.$agent" >/dev/null 2>&1 || true
     done
     sleep 1
-    for agent in consolidate menubar; do
+    for agent in consolidate menubar organizer; do
         for attempt in 1 2 3; do
             if launchctl bootstrap "gui/$UID_NUM" "$LAUNCH_AGENTS/com.privatesecretary.$agent.plist"; then
                 break
@@ -128,7 +132,7 @@ Installed:
   menu bar app  $APP
   binaries      $INSTALL_DIR/bin
   memory        $PS_HOME
-  LaunchAgents  ~/Library/LaunchAgents/com.privatesecretary.{menubar,consolidate}.plist
+  LaunchAgents  ~/Library/LaunchAgents/com.privatesecretary.{menubar,organizer,consolidate}.plist
 
 Live capture needs Screen Recording permission for:
   $APP

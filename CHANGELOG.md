@@ -5,6 +5,7 @@
 ### Added
 
 - 本地 LLM 接入：Ollama + Qwen2.5 1.5B → `scripts/llm-bridge.py` → intent/fact model adapter；纯 localhost。
+- Timeline → Todo/Message 抽取：`secretary organize`、增量 LaunchAgent、噪音过滤、去重。
 - Overview 实时活动卡：Screenshots / OCR frames / Audio / LLM tokens / calls，2 秒刷新。
 - 24/7 登录自启：menubar / consolidate / ollama LaunchAgent；采集 helper 由 App 子进程管理以继承 TCC。
 - Gmail inbox OCR extractor：从 Chrome Gmail 可见 inbox 行提取 sender / subject / time，写入 ContactMessage；纯规则、本地、无网络。
@@ -17,7 +18,7 @@
 - 修复 LaunchAgent consolidate 模板占位符导致的 CLI 路径错误。
 - 菜单栏改为 `NSStatusItem` + AppKit 窗口；刘海屏遮挡时自动切 Dock/窗口 fallback。
 - 增加真实采集 E2E 报告和截图。
-- 测试增至 195 个 Swift Testing 测试。
+- 测试增至 200 个 Swift Testing 测试。
 
 ## v3.2.0 — 2026-11-07
 

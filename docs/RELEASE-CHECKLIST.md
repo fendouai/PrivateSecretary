@@ -245,7 +245,7 @@ lipo -info .build/release/PrivateSecretary
 当前基线：
 
 ```text
-195 Swift Testing
+200 Swift Testing
 make verify
 GitHub Actions macOS
 ```
@@ -301,7 +301,7 @@ GitHub Actions macOS
 - [ ] DMG 可安装/可卸载
 - [ ] 升级保留数据和 TCC
 - [ ] 登录自启/休眠唤醒稳定
-- [ ] 195+ 测试和 soak 通过
+- [ ] 200+ 测试和 soak 通过
 - [ ] 隐私政策/第三方 notices
 - [ ] 版本号、CHANGELOG、tag 对齐
 - [ ] SHA-256、release notes、回滚包

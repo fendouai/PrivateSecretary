@@ -118,3 +118,102 @@ public final class ModelCommandClient: @unchecked Sendable, IntentClassifying {
         }
     }
 }
+
+extension ModelCommandClient: TimelineModelExtracting {
+    public func extractTodos(from episode: Episode) throws -> [TimelineTodoCandidate] {
+        guard config.enabled, !config.executable.isEmpty else { return [] }
+        let payload: [String: Any] = [
+            "task": "extract_todos",
+            "version": 1,
+            "episode": [
+                "id": episode.id,
+                "timestamp": DateCoding.iso(episode.startedAt),
+                "application": episode.application ?? "",
+                "window_title": episode.windowTitle ?? "",
+                "transcript": episode.transcript,
+                "ocr_text": episode.ocrText,
+                "source": episode.source.rawValue
+            ]
+        ]
+        let data = try JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
+        let result = try CommandRunner.run(
+            executable: config.executable,
+            arguments: config.arguments,
+            stdin: data,
+            timeoutSeconds: config.timeoutSeconds,
+            maxOutputBytes: config.maxOutputBytes
+        )
+        guard result.exitCode == 0 else {
+            throw CommandRunnerError.nonZeroExit(code: result.exitCode, stderr: result.stderrString)
+        }
+        struct Response: Decodable { var todos: [Item] }
+        struct Item: Decodable {
+            var title: String
+            var detail: String?
+            var due_at: String?
+            var confidence: Double?
+            var evidence: String?
+        }
+        let response = try JSONCoding.decoder().decode(Response.self, from: result.stdout)
+        return response.todos.prefix(8).map {
+            TimelineTodoCandidate(
+                title: $0.title.trimmingCharacters(in: .whitespacesAndNewlines),
+                detail: $0.detail ?? "",
+                dueDate: $0.due_at,
+                confidence: $0.confidence ?? 0.7,
+                evidence: $0.evidence ?? ""
+            )
+        }
+    }
+
+    public func extractMessages(from episode: Episode) throws -> [TimelineMessageCandidate] {
+        guard config.enabled, !config.executable.isEmpty else { return [] }
+        let payload: [String: Any] = [
+            "task": "extract_messages",
+            "version": 1,
+            "episode": [
+                "id": episode.id,
+                "timestamp": DateCoding.iso(episode.startedAt),
+                "application": episode.application ?? "",
+                "window_title": episode.windowTitle ?? "",
+                "transcript": episode.transcript,
+                "ocr_text": episode.ocrText,
+                "source": episode.source.rawValue
+            ]
+        ]
+        let data = try JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
+        let result = try CommandRunner.run(
+            executable: config.executable,
+            arguments: config.arguments,
+            stdin: data,
+            timeoutSeconds: config.timeoutSeconds,
+            maxOutputBytes: config.maxOutputBytes
+        )
+        guard result.exitCode == 0 else {
+            throw CommandRunnerError.nonZeroExit(code: result.exitCode, stderr: result.stderrString)
+        }
+        struct Response: Decodable { var messages: [Item] }
+        struct Item: Decodable {
+            var channel: String
+            var contact: String
+            var handle: String?
+            var direction: String?
+            var text: String
+            var confidence: Double?
+        }
+        let response = try JSONCoding.decoder().decode(Response.self, from: result.stdout)
+        return response.messages.prefix(12).compactMap { item in
+            let contact = item.contact.trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard contact.count >= 2, text.count >= 2 else { return nil }
+            return TimelineMessageCandidate(
+                channel: item.channel,
+                contactName: contact,
+                handle: item.handle,
+                direction: MessageDirection(rawValue: item.direction ?? "") ?? .inbound,
+                text: text,
+                confidence: item.confidence ?? 0.7
+            )
+        }
+    }
+}

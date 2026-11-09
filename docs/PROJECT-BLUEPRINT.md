@@ -266,6 +266,7 @@ BM25 词法
 | `ContextExporter` | 可粘贴 Agent 上下文 |
 | `DashboardRenderer` | 只读 HTML |
 | `llm-bridge.py` | 本地 Ollama JSON 适配器 |
+| `TimelineOrganizer` | Timeline → Todo/Message/Contact 增量抽取 |
 
 ---
 
@@ -281,7 +282,7 @@ BM25 词法
 - Timeline / Todos / Contacts / Messages；
 - 菜单栏 App / CLI / MCP / Dashboard；
 - 真实屏幕 OCR、系统音频 ASR、Gmail inbox OCR 行提取；
-- 195 个 Swift Testing 测试。
+- 200 个 Swift Testing 测试。
 
 仍待完成：
 
@@ -435,7 +436,7 @@ BM25 词法
 
 ### 8.3 验收基线
 
-- 195 Swift Testing 测试；
+- 200 Swift Testing 测试；
 - 真实 OCR/系统音频采集；
 - Gmail inbox OCR → message；
 - 软件栈 E2E、App smoke、安装测试、多 Agent 配置；

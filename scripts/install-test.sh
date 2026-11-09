@@ -27,10 +27,12 @@ test -x "$INSTALL_DIR/PrivateSecretary.app/Contents/Helpers/secretaryd"
 test -x "$INSTALL_DIR/PrivateSecretary.app/Contents/Helpers/secretary-mcp"
 test ! -f "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist"
 test -f "$HOME/Library/LaunchAgents/com.privatesecretary.consolidate.plist"
+test -f "$HOME/Library/LaunchAgents/com.privatesecretary.organizer.plist"
 test -f "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist"
 test -f "$PRIVATE_SECRETARY_HOME/config.json"
 test -f "$PRIVATE_SECRETARY_HOME/secretary.sqlite"
 plutil -lint "$HOME/Library/LaunchAgents/com.privatesecretary.consolidate.plist" >/dev/null
+plutil -lint "$HOME/Library/LaunchAgents/com.privatesecretary.organizer.plist" >/dev/null
 plutil -lint "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist" >/dev/null
 ! grep -q '@PS_HOME@\|@APP_BINARY@\|@CONSOLIDATE_BINARY@' \
     "$HOME/Library/LaunchAgents/"*.plist
@@ -43,6 +45,8 @@ grep -q '3.2.1' "$INSTALL_DIR/PrivateSecretary.app/Contents/Info.plist"
     "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist" | grep -qx '1'
 grep -q 'PrivateSecretary/bin/secretary' \
     "$HOME/Library/LaunchAgents/com.privatesecretary.consolidate.plist"
+grep -q 'PrivateSecretary/bin/secretary' \
+    "$HOME/Library/LaunchAgents/com.privatesecretary.organizer.plist"
 
 echo "== menu bar app launch =="
 PRIVATE_SECRETARY_HOME="$PRIVATE_SECRETARY_HOME" \
@@ -64,6 +68,7 @@ echo "== uninstall, preserve memory =="
 test ! -d "$INSTALL_DIR"
 test ! -f "$HOME/Library/LaunchAgents/com.privatesecretary.daemon.plist"
 test ! -f "$HOME/Library/LaunchAgents/com.privatesecretary.menubar.plist"
+test ! -f "$HOME/Library/LaunchAgents/com.privatesecretary.organizer.plist"
 test -f "$PRIVATE_SECRETARY_HOME/secretary.sqlite"
 
 echo "== purge =="

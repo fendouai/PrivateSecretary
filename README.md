@@ -13,6 +13,7 @@
 - **任务 → todo list**
 - **联系人消息 → contact list / message list**
 - **Gmail 页面 → 可见 inbox 行 OCR → message list**（无邮箱密码、无网络）
+- **Timeline 派生抽取**：Notes/TextEdit → Todo；Gmail inbox OCR → Message/Contact；每 5 分钟增量
 - **Overview 实时活动卡**：截图帧、OCR 帧、音频秒数、本地 LLM token，2 秒刷新
 
 > 产品名保持 **PrivateSecretary**（展示名 Private Secretary）。当前版本 **3.2.1**，只读整理版。
@@ -24,7 +25,7 @@
 | 项目 | 状态 |
 |---|---|
 | Swift Package / CLI / MCP / daemon | 可构建、可运行 |
-| 自动化测试 | **195 个 Swift Testing 测试全部通过** |
+| 自动化测试 | **200 个 Swift Testing 测试全部通过** |
 | 菜单栏 App | **可构建、可启动、安装测试通过** |
 | 多 Agent 接入 | Codex / Claude Desktop / Cursor / generic 配置测试通过 |
 | CLI + MCP + daemon 进程级冒烟 | 通过 |
@@ -376,7 +377,7 @@ curl -L -o ~/.private-secretary/models/ggml-base.bin \
 ## 测试
 
 ```bash
-make test          # 195 Swift Testing 测试
+make test          # 200 Swift Testing 测试
 make smoke         # CLI + MCP + daemon + 隔离 Codex 注册
 make e2e           # 全软件栈：socket → DB → MCP → CLI → dashboard → digest
 make app-test      # SwiftUI 菜单栏 App 启动 smoke
@@ -465,7 +466,7 @@ Sources/
   secretary-mcp/    stdio MCP
   secretaryd/       daemon + capture + socket
   PrivateSecretaryApp/ SwiftUI menu bar App
-Tests/              195 个 Swift Testing 测试
+Tests/              200 个 Swift Testing 测试
 skills/private-secretary/SKILL.md
 integrations/       Agent policy + generic MCP config
 launchd/
@@ -488,6 +489,7 @@ docs/
 - [本地 LLM 接入](docs/LOCAL-LLM.md)
 - [登录自启与 24/7 采集](docs/LOGIN-AUTOSTART.md)
 - [实时活动指标](docs/LIVE-METRICS.md)
+- [Timeline → Todo / Message 抽取](docs/TIMELINE-EXTRACTION.md)
 - [正式发布清单](docs/RELEASE-CHECKLIST.md)
 - [Agent 接入](docs/AGENT-INTEGRATION.md)
 - [macOS 授权指引](docs/PERMISSIONS.md)
@@ -501,6 +503,7 @@ docs/
 ```text
 com.privatesecretary.menubar     菜单栏 App + 内嵌采集 helper，崩溃重启
 com.privatesecretary.consolidate 每日 02:30 巩固
+com.privatesecretary.organizer  每 5 分钟 Timeline → Todo/Message
 com.privatesecretary.ollama      本地 LLM，KeepAlive
 ```
 

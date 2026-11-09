@@ -11,6 +11,7 @@ PrivateSecretary 使用“App 常驻 + App 内嵌 helper”的方式运行采集
 | `com.privatesecretary.menubar` | 菜单栏 App，TCC 责任进程 | `RunAtLoad`，崩溃重启 |
 | App 内嵌 `secretaryd` | 屏幕/系统音频采集，App 子进程 | App 启动后自动拉起 |
 | `com.privatesecretary.consolidate` | 每日巩固/摘要 | 每天 02:30 |
+| `com.privatesecretary.organizer` | Timeline → Todo/Message 抽取 | 每 5 分钟 |
 | `com.privatesecretary.ollama` | 本地 LLM 服务 | `RunAtLoad` + `KeepAlive` |
 
 plist：
@@ -18,6 +19,7 @@ plist：
 ```text
 ~/Library/LaunchAgents/com.privatesecretary.menubar.plist
 ~/Library/LaunchAgents/com.privatesecretary.consolidate.plist
+~/Library/LaunchAgents/com.privatesecretary.organizer.plist
 ~/Library/LaunchAgents/com.privatesecretary.ollama.plist
 ```
 

@@ -94,6 +94,8 @@ final class CLIRunner {
                   [--at ISO-8601] [--thread text] [--external-id id]
       message import --file <path> | --stdin [--channel default] [--json]
       message extract-gmail <episode_id> [--json]
+      organize [--since 7d|yyyy-MM-dd] [--limit N] [--force] [--dry-run] [--json]
+                                     Backfill todos/messages from timeline
       contact merge <source_id> --into <target_id>
       review list [--json]
       review accept|reject|correct <fact_id> [--statement text]
@@ -162,6 +164,7 @@ final class CLIRunner {
         case "brief": try runBrief(service, rest)
         case "context": try runContext(service, rest)
         case "dashboard": try runDashboard(service, rest)
+        case "organize": try runOrganize(service, rest)
         case "timeline": try runTimeline(service, rest)
         case "todos": try runTodos(service, rest)
         case "todo": try runTodo(service, rest)
@@ -489,6 +492,51 @@ final class CLIRunner {
         } else {
             print("Dashboard written to \(output.path)")
             print("Timeline \(brief.timeline.count) · open todos \(brief.openTodos.count) · unread messages \(brief.unreadMessages.count)")
+        }
+    }
+
+    private func runOrganize(_ service: MemoryService, _ tokens: [String]) throws {
+        let args = try CLIArguments(tokens: tokens, valueOptions: ["since", "limit"], flagOptions: ["force", "dry-run"])
+        guard args.positionals.isEmpty else { throw CLIError.message("organize takes no positional arguments") }
+        if args.flags.contains("help") {
+            print("organize [--since 7d|yyyy-MM-dd] [--limit N] [--force] [--dry-run] [--json]")
+            return
+        }
+        var since: Date?
+        if let raw = args.options["since"] {
+            if raw == "all" {
+                since = nil
+            } else if raw.hasSuffix("d"), let days = Int(raw.dropLast()), days > 0 {
+                since = Calendar.current.date(byAdding: .day, value: -days, to: Date())
+            } else if raw.hasSuffix("h"), let hours = Int(raw.dropLast()), hours > 0 {
+                since = Date().addingTimeInterval(-Double(hours) * 3_600)
+            } else if let day = DateCoding.parseDay(raw) {
+                since = day
+            } else {
+                throw CLIError.message("--since must be 7d, 24h, yyyy-MM-dd, or all")
+            }
+        }
+        let limit: Int
+        if let raw = args.options["limit"], let value = Int(raw) {
+            limit = value
+        } else {
+            limit = 1_000
+        }
+        let report = try service.organize(
+            since: since,
+            limit: limit,
+            force: args.flags.contains("force"),
+            dryRun: args.flags.contains("dry-run")
+        )
+        if jsonOutput {
+            let data = try JSONCoding.encoder(pretty: true).encode(report)
+            print(String(decoding: data, as: UTF8.self))
+        } else {
+            print("Scanned \(report.episodesScanned) episodes · organized \(report.episodesOrganized) · skipped \(report.episodesSkipped)")
+            print("Created \(report.todosCreated) todos · \(report.messagesCreated) messages · \(report.contacts) contacts")
+            if !report.errors.isEmpty {
+                for error in report.errors { print("! \(error)") }
+            }
         }
     }
 

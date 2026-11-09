@@ -21,10 +21,12 @@ if [[ "${PRIVATE_SECRETARY_SKIP_LAUNCHCTL:-0}" != "1" ]]; then
     launchctl bootout "gui/$UID_NUM/com.privatesecretary.menubar" >/dev/null 2>&1 || true
     launchctl bootout "gui/$UID_NUM/com.privatesecretary.daemon" >/dev/null 2>&1 || true
     launchctl bootout "gui/$UID_NUM/com.privatesecretary.consolidate" >/dev/null 2>&1 || true
+    launchctl bootout "gui/$UID_NUM/com.privatesecretary.organizer" >/dev/null 2>&1 || true
 fi
 rm -f "$LAUNCH_AGENTS/com.privatesecretary.daemon.plist" \
       "$LAUNCH_AGENTS/com.privatesecretary.consolidate.plist" \
-      "$LAUNCH_AGENTS/com.privatesecretary.menubar.plist"
+      "$LAUNCH_AGENTS/com.privatesecretary.menubar.plist" \
+      "$LAUNCH_AGENTS/com.privatesecretary.organizer.plist"
 rm -rf "$INSTALL_DIR"
 
 if command -v codex >/dev/null 2>&1; then
